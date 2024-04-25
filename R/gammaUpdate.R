@@ -36,7 +36,7 @@ gammaUpdate_NoWarp <- function(t, y, c, pi, knots_shape, Omega, lambda1, lambda2
 
   for (i in 1:N) {
     S_i <- cbind(pi[i, 1] * spline_basis, pi[i, 2] * spline_basis)
-    matrix(y[i, ] - c[i], nrow = n)
+    y_i <- matrix(y[i, ] - c[i], nrow = n)
     preCov <- preCov + t(S_i) %*% S_i
     preMean <- preMean + t(S_i) %*% y_i
   }
@@ -45,7 +45,7 @@ gammaUpdate_NoWarp <- function(t, y, c, pi, knots_shape, Omega, lambda1, lambda2
   priorPrecision[1:df, 1:df] <- Omega / lambda1
   priorPrecision[(df + 1):(2 * df), (df + 1):(2 * df)] <- Omega / lambda2
 
-  cov_gamma <- ginv(priorPrecision + preCov / var_e)
+  cov_gamma <- MASS::ginv(priorPrecision + preCov / var_e)
   mean_gamma <- cov_gamma %*% preMean / var_e
 
   gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
@@ -114,7 +114,7 @@ gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega
     spline_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
 
     S_i <- cbind(pi[i, 1] * spline_basis1, pi[i, 2] * spline_basis2)
-    matrix(y[i, ] - c[i], nrow = n)
+    y_i <- matrix(y[i, ] - c[i], nrow = n)
     preCov <- preCov + t(S_i) %*% S_i
     preMean <- preMean + t(S_i) %*% y_i
   }
@@ -123,7 +123,7 @@ gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega
   priorPrecision[1:df, 1:df] <- Omega / lambda1
   priorPrecision[(df + 1):(2 * df), (df + 1):(2 * df)] <- Omega / lambda2
 
-  cov_gamma <- ginv(priorPrecision + preCov / var_e)
+  cov_gamma <- MASS::ginv(priorPrecision + preCov / var_e)
   mean_gamma <- cov_gamma %*% preMean / var_e
 
   gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
@@ -195,7 +195,7 @@ gammaUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, pi, knots_shape, Omega,
   priorPrecision[1:df, 1:df] <- Omega / lambda1
   priorPrecision[(df + 1):(2 * df), (df + 1):(2 * df)] <- Omega / lambda2
 
-  cov_gamma <- ginv(priorPrecision + preCov / var_e)
+  cov_gamma <- MASS::ginv(priorPrecision + preCov / var_e)
   mean_gamma <- cov_gamma %*% preMean / var_e
 
   gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
