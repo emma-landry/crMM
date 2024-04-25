@@ -10,7 +10,8 @@ meanNoWarp <- function(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept 
   }
 
   if (length(gamma1) != df | length(gamma2) != df){
-    stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions.")
+    stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
+         implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
   }
 
   if (min(knots_shape) <= min(t) | max(knots_shape) >= max(t)) {
@@ -49,7 +50,8 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
   }
 
   if (length(gamma1) != df | length(gamma2) != df) {
-    stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions.")
+    stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
+         implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
   }
 
   if (min(knots_shape) <= min(t) | max(knots_shape) >= max(t)) {
@@ -117,7 +119,8 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
   }
 
   if (length(gamma1) != df | length(gamma2) != df) {
-    stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions.")
+    stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
+         implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
   }
 
   if (min(knots_shape) <= min(t) | max(knots_shape) >= max(t)) {

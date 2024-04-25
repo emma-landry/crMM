@@ -1,4 +1,4 @@
-cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, degree, intercept = F){
+cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, degree, intercept = F) {
   n <- length(t)
   N <- nrow(y)
 
@@ -12,7 +12,7 @@ cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, 
   mean_c <- var_c / (var_e/n + var_c) * rowSums(y - modelMean) / n
   var_c <- 1 / (1 / var_c + n / var_e)
 
-  c <- rnorm(n = N, mean = mean_c, sd = sqrt(var_c))
+  c <- stats::rnorm(n = N, mean = mean_c, sd = sqrt(var_c))
   c <- c - mean(c)
 
   return(c)
@@ -33,7 +33,7 @@ cUpdate_Warp <- function(t, y, phi, rho, tt_basis, gamma1, gamma2, pi,
   mean_c <- var_c / (var_e/n + var_c) * rowSums(y - modelMean) / n
   var_c <- 1 / (1 / var_c + n / var_e)
 
-  c <- rnorm(n = N, mean = mean_c, sd = sqrt(var_c))
+  c <- stats::rnorm(n = N, mean = mean_c, sd = sqrt(var_c))
   c <- c - mean(c)
 
   return(c)
@@ -54,7 +54,7 @@ cUpdate_Warp_alt <- function(t, y, phi, tt_basis, gamma1, gamma2, pi,
   mean_c <- var_c / (var_e/n + var_c) * rowSums(y - modelMean) / n
   var_c <- 1 / (1 / var_c + n / var_e)
 
-  c <- rnorm(n = N, mean = mean_c, sd = sqrt(var_c))
+  c <- stats::rnorm(n = N, mean = mean_c, sd = sqrt(var_c))
   c <- c - mean(c)
 
   return(c)
