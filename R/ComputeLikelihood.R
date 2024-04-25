@@ -169,6 +169,10 @@ Likelihood <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree, var_e, 
     stop("The number of rows in 'y' must match the length of 'c'.")
   }
 
+  if (ncol(y) != n) {
+    stop("The number columns in 'y' must match the length of 't'.")
+  }
+
   if (is.null(phi) & is.null(tt_basis) & is.null(rho)) {
     modelMean <- meanNoWarp(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept)
   } else if (!is.null(phi) & !is.null(tt_basis) & !is.null(rho)){
