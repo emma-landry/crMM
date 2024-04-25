@@ -1,4 +1,4 @@
-cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, degree, intercept = F) {
+cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, degree = 3, intercept = F) {
   n <- length(t)
   N <- nrow(y)
 
@@ -19,7 +19,7 @@ cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, 
 }
 
 cUpdate_Warp <- function(t, y, phi, rho, tt_basis, gamma1, gamma2, pi,
-                         knots_shape, var_c, var_e, degree, intercept = F) {
+                         knots_shape, var_c, var_e, degree = 3, intercept = F) {
   n <- length(t)
   N <- nrow(y)
 
@@ -40,7 +40,7 @@ cUpdate_Warp <- function(t, y, phi, rho, tt_basis, gamma1, gamma2, pi,
 }
 
 cUpdate_Warp_alt <- function(t, y, phi, tt_basis, gamma1, gamma2, pi,
-                         knots_shape, var_c, var_e, degree, intercept = F) {
+                         knots_shape, var_c, var_e, degree = 3, intercept = F) {
   n <- length(t)
   N <- nrow(y)
 

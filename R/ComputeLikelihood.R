@@ -1,4 +1,4 @@
-meanNoWarp <- function(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept = F) {
+meanNoWarp <- function(t, c, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F) {
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
@@ -37,7 +37,7 @@ meanNoWarp <- function(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept 
   return(modelMean)
 }
 
-meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, degree, intercept = F){
+meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F) {
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
@@ -106,7 +106,7 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
   return(modelMean)
 }
 
-meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, degree, intercept = F){
+meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F) {
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
@@ -163,8 +163,8 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
   return(modelMean)
 }
 
-Likelihood <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree, var_e, phi = NULL,
-                       tt_basis = NULL, rho = NULL, intercept = F, log = F){
+Likelihood <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, var_e, phi = NULL,
+                       tt_basis = NULL, rho = NULL, intercept = F, log = F) {
   n <- length(t)
   N <- length(c)
 
