@@ -119,7 +119,7 @@ var_phiUpdate_Reg <- function(phi, Upsilon, a_phi, b_phi, X, B, B0, V0) {
   }
 
   if (ncol(V0) != l | nrow(V0) != l) {
-    stop("'V0' must be a square matrix of dimension matching the numbr of columns in 'X'.")
+    stop("'V0' must be a square matrix of dimension matching the number of columns in 'X'.")
   }
 
   jupp_mean <- jupp(Upsilon)[-c(1, Q)]

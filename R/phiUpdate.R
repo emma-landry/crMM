@@ -33,9 +33,9 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
 
     phi_new <- juppinv(eta_new)
 
-    modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi,
+    modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
-    modelMean_new <- meanWarp(t, c[i], phi_new, rho, tt_basis, gamma1, gamma2, pi,
+    modelMean_new <- meanWarp(t, c[i], phi_new, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
 
     y_i <- y[i, ]
@@ -106,9 +106,9 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
     phi_new <- juppinv(eta_new)
 
-    modelMean_old <- meanWarp_alt(t, c[i], phi_old, tt_basis, gamma1, gamma2, pi,
+    modelMean_old <- meanWarp_alt(t, c[i], phi_old, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
-    modelMean_new <- meanWarp_alt(t, c[i], phi_new, tt_basis, gamma1, gamma2, pi,
+    modelMean_new <- meanWarp_alt(t, c[i], phi_new, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
 
     y_i <- y[i, ]
@@ -192,9 +192,9 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
 
     phi_new <- juppinv(eta_new)
 
-    modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi,
+    modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
-    modelMean_new <- meanWarp(t, c[i], phi_new, rho, tt_basis, gamma1, gamma2, pi,
+    modelMean_new <- meanWarp(t, c[i], phi_new, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
 
     y_i <- y[i, ]
@@ -278,9 +278,9 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
     phi_new <- juppinv(eta_new)
 
-    modelMean_old <- meanWarp_alt(t, c[i], phi_old, tt_basis, gamma1, gamma2, pi,
+    modelMean_old <- meanWarp_alt(t, c[i], phi_old, tt_basis, gamma1, gamma2, pi[i, ],
                                   knots_shape, degree, intercept)
-    modelMean_new <- meanWarp_alt(t, c[i], phi_new, tt_basis, gamma1, gamma2, pi,
+    modelMean_new <- meanWarp_alt(t, c[i], phi_new, tt_basis, gamma1, gamma2, pi[i, ],
                                   knots_shape, degree, intercept)
 
     y_i <- y[i, ]
