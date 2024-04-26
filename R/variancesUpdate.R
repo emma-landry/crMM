@@ -72,3 +72,68 @@ var_eUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, kno
   var_e <- 1 / stats::rgamma(n = 1, shape = a_e + n * N / 2, rate = b_e + squaredSums / 2)
   return(var_e)
 }
+
+var_phiUpdate_NoReg <- function(phi, Upsilon, a_phi, b_phi) {
+  Q <- ncol(phi)
+  N <- nrow(phi)
+
+  if(length(Upsilon) != Q) {
+    stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
+  }
+
+  jupp_mean <- jupp(Upsilon)[-c(1, Q)]
+  var_sum <- 0
+
+  for (i in 1:N) {
+    phi_i <- phi[i, ]
+    eta_i <- jupp(phi_i)[-c(1, Q)]
+    var_sum <- var_sum + t(eta_i - jupp_mean) %*% (eta_i - jupp_mean)
+  }
+  var_phi <- 1 / stats::rgamma(n = 1, shape = a_phi + N * (Q - 2) / 2, rate = b_phi + var_sum / 2)
+  return(var_phi)
+}
+
+var_phiUpdate_Reg <- function(phi, Upsilon, a_phi, b_phi, X, B, B0, V0) {
+  Q <- ncol(phi)
+  N <- nrow(phi)
+  l <- ncol(X)
+
+  if(length(Upsilon) != Q) {
+    stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
+  }
+
+  if (nrow(X) != N) {
+    stop("The number of rows in 'X' must match the number of rows in 'phi'.")
+  }
+
+  if (nrow(B) != l) {
+    stop("The number of rows in 'B' must match the number of columns in 'X'.")
+  }
+
+  if (ncol(B) != Q - 2) {
+    stop("The number of columns in 'B' must be 'ncol(phi) - 2'.")
+  }
+
+  if (ncol(B) != ncol(B0) | nrow(B) != nrow(B0)) {
+    stop("The dimensions of 'B' and 'B0' must match.")
+  }
+
+  if (ncol(V0) != l | nrow(V0) != l) {
+    stop("'V0' must be a square matrix of dimension matching the numbr of columns in 'X'.")
+  }
+
+  jupp_mean <- jupp(Upsilon)[-c(1, Q)]
+  var_sum <- 0
+
+  for (i in 1:N) {
+    phi_i <- phi[i, ]
+    eta_i <- jupp(phi_i)[-c(1, Q)]
+    var_sum <- var_sum + t(eta_i - jupp_mean - t(B) %*% X[i, ]) %*% (eta_i - jupp_mean - t(B) %*% X[i, ])
+  }
+  posterior_a <- a_phi + (Q - 2) * (N + l) / 2
+  B_vec <- matrix(B, nrow = (Q - 2) * l)
+  B0_vec <- matrix(B0, nrow = (Q - 2) * l)
+  posterior_b <- b_phi + var_sum / 2 +(B_vec - B0_vec) %*% kronecker(diag(Q - 2), V0) %*% (B_vec - B0_vec) / 2
+  var_phi <- 1 / stats::rgamma(n = 1, shape = posterior_a, rate = posterior_b)
+  return(var_phi)
+}

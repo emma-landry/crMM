@@ -17,6 +17,10 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
     stop("The length of 'tau' must match the length of 'c'.")
   }
 
+  if(length(Upsilon) != Q) {
+    stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
+  }
+
   it_num <- it_num + 1
 
   for (i in 1:N) {
@@ -52,7 +56,7 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
 
     if (log(stats::runif(1)) < ratio) {
       phi[i, ] <- phi_new
-      acceptance_sums[i] <- acceptance_sum[i] + 1
+      acceptance_sums[i] <- acceptance_sums[i] + 1
     }
     tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
   }
@@ -84,6 +88,10 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
   if (length(tau) != N) {
     stop("The length of 'tau' must match the length of 'c'.")
+  }
+
+  if(length(Upsilon) != Q) {
+    stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
   }
 
   it_num <- it_num + 1
@@ -121,7 +129,7 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
     if (log(stats::runif(1)) < ratio) {
       phi[i, ] <- phi_new
-      acceptance_sums[i] <- acceptance_sum[i] + 1
+      acceptance_sums[i] <- acceptance_sums[i] + 1
     }
     tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
   }
@@ -168,6 +176,10 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
     stop("The number of columns in 'B' must be 'ncol(phi) - 2'.")
   }
 
+  if(length(Upsilon) != Q) {
+    stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
+  }
+
   it_num <- it_num + 1
 
   for (i in 1:N) {
@@ -203,7 +215,7 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
 
     if (log(stats::runif(1)) < ratio) {
       phi[i, ] <- phi_new
-      acceptance_sums[i] <- acceptance_sum[i] + 1
+      acceptance_sums[i] <- acceptance_sums[i] + 1
     }
     tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
   }
@@ -224,6 +236,7 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
   n <- length(t)
   N <- length(c)
   Q <- ncol(phi)
+  l <- ncol(X)
 
   if (nrow(y) != N){
     stop("The number of rows in 'y' must match the length of 'c'.")
@@ -247,6 +260,10 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
   if (ncol(B) != Q - 2) {
     stop("The number of columns in 'B' must be 'ncol(phi) - 2'.")
+  }
+
+  if(length(Upsilon) != Q) {
+    stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
   }
 
   it_num <- it_num + 1
@@ -284,7 +301,7 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
     if (log(stats::runif(1)) < ratio) {
       phi[i, ] <- phi_new
-      acceptance_sums[i] <- acceptance_sum[i] + 1
+      acceptance_sums[i] <- acceptance_sums[i] + 1
     }
     tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
   }

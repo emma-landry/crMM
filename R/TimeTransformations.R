@@ -57,6 +57,7 @@ jupp <- function(x) {
   p <- length(x)
   y <- x
   y[2:(p - 1)] <- log(x[3:p] - x[2:(p - 1)]) - log(x[2:(p - 1)] - x[1:(p-2)])
+  return(y)
 }
 
 juppinv <- function(y) {
