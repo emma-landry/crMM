@@ -1,5 +1,6 @@
-piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, var_e,
-                            alpha, rescale = T, label1 = NULL, label2 = NULL, tuning_param = 1000) {
+piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F,
+                            var_e, alpha, rescale = T, label1 = NULL, label2 = NULL,
+                            tuning_param = 1000) {
   n <- length(t)
   N <- length(c)
 
@@ -74,11 +75,11 @@ piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3
     P0 <- -1 / (2 * var_e) * sum((y_i - modelMean_old) ^ 2) +
           (alpha[1] - 1) * log(pi_old[1]) +
           (alpha[2] - 1) * log(pi_old[2])
-    Q0 <- LaplacesDemon::didirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
+    Q0 <- LaplacesDemon::ddirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
-    if (log(runif(1)) < ratio) {
+    if (log(stats::runif(1)) < ratio) {
       pi_old <- pi_new
     }
     pi[i, ] <- pi_old
@@ -91,8 +92,9 @@ piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3
   return(pi)
 }
 
-piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, degree = 3, var_e,
-                            alpha, rescale = T, label1 = NULL, label2 = NULL, tuning_param = 1000) {
+piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, degree = 3,
+                          intercept = F, var_e, alpha, rescale = T, label1 = NULL, label2 = NULL,
+                          tuning_param = 1000) {
   n <- length(t)
   N <- length(c)
 
@@ -169,11 +171,11 @@ piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
     P0 <- -1 / (2 * var_e) * sum((y_i - modelMean_old) ^ 2) +
       (alpha[1] - 1) * log(pi_old[1]) +
       (alpha[2] - 1) * log(pi_old[2])
-    Q0 <- LaplacesDemon::didirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
+    Q0 <- LaplacesDemon::ddirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
-    if (log(runif(1)) < ratio) {
+    if (log(stats::runif(1)) < ratio) {
       pi_old <- pi_new
     }
     pi[i, ] <- pi_old
@@ -186,8 +188,9 @@ piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
   return(pi)
 }
 
-piUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, degree = 3, var_e,
-                          alpha, rescale = T, label1 = NULL, label2 = NULL, tuning_param = 1000) {
+piUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, degree = 3,
+                              intercept = F, var_e, alpha, rescale = T, label1 = NULL, label2 = NULL,
+                              tuning_param = 1000) {
   n <- length(t)
   N <- length(c)
 
@@ -264,11 +267,11 @@ piUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
     P0 <- -1 / (2 * var_e) * sum((y_i - modelMean_old) ^ 2) +
       (alpha[1] - 1) * log(pi_old[1]) +
       (alpha[2] - 1) * log(pi_old[2])
-    Q0 <- LaplacesDemon::didirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
+    Q0 <- LaplacesDemon::ddirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
-    if (log(runif(1)) < ratio) {
+    if (log(stats::runif(1)) < ratio) {
       pi_old <- pi_new
     }
     pi[i, ] <- pi_old
