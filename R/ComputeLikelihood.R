@@ -1,32 +1,19 @@
-meanNoWarp <- function(t, c, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F) {
+meanNoWarp <- function(t, c, gamma1, gamma2, pi, shape_basis) {
   n <- length(t)
   N <- length(c)
-  p <- length(knots_shape)
-
-  if (intercept == F) {
-    df <- p + degree
-  } else {
-    df <- p + degree + 1
-  }
+  df <- length(shape_basis)
 
   if (length(gamma1) != df | length(gamma2) != df){
     stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
          implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
   }
 
-  if (min(knots_shape) <= min(t) | max(knots_shape) >= max(t)) {
-    stop("The inner knots in 'knots_shape' should all fall strictly between the smallest
-         and largest value of 't'.")
-  }
-
   if (nrow(pi) != N) {
     stop("The number of rows of 'pi' must match the length of 'c'.")
   }
 
-
-  spline_basis <- splines::bs(x = t, knots = knots_shape, degree = degree, intercept = intercept)
-  f1 <- spline_basis %*% gamma1
-  f2 <- spline_basis %*% gamma2
+  f1 <- shape_basis %*% gamma1
+  f2 <- shape_basis %*% gamma2
 
   if (N > 1) {
     modelMean <- c + outer(pi[, 1], gamma1) + outer(pi[, 2], gamma2)
@@ -80,11 +67,11 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
     tWarp2 <- tt_basis %*% phi
     tWarp1 <- rho * (tWarp1 - t) + t
 
-    spline_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
-    spline_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
+    shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
+    shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
 
-    f1 <- spline_basis1 %*% gamma1
-    f2 <- spline_basis2 %*% gamma2
+    f1 <- shape_basis1 %*% gamma1
+    f2 <- shape_basis2 %*% gamma2
 
     modelMean <- c + pi[1] * f1 + pi[2] * f2
 
@@ -94,11 +81,11 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
       tWarp2 <- tt_basis %*% phi[i, ]
       tWarp1 <- rho * (tWarp1 - t) + t
 
-      spline_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
-      spline_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
+      shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
+      shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
 
-      f1 <- spline_basis1 %*% gamma1
-      f2 <- spline_basis2 %*% gamma2
+      f1 <- shape_basis1 %*% gamma1
+      f2 <- shape_basis2 %*% gamma2
 
       modelMean[i, ] <- c[i] + pi[i, 1] * f1 + pi[i, 2] * f2
     }
@@ -143,9 +130,9 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
 
   if (N == 1){
     tWarp <- tt_basis %*% phi
-    spline_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
-    f1 <- spline_basis %*% gamma1
-    f2 <- spline_basis %*% gamma2
+    shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
+    f1 <- shape_basis %*% gamma1
+    f2 <- shape_basis %*% gamma2
 
     modelMean <- c + pi[1] * f1 + pi[2] * f2
   } else {
@@ -153,8 +140,8 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
     for (i in 1:N) {
       tWarp <- tt_basis %*% phi[i, ]
       splines_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
-      f1 <- spline_basis %*% gamma1
-      f2 <- spline_basis %*% gamma2
+      f1 <- shape_basis %*% gamma1
+      f2 <- shape_basis %*% gamma2
 
       modelMean[i, ] <- c[i] + pi[i, 1] * f1 + pi[i, 2] * f2
     }
@@ -163,8 +150,8 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
   return(modelMean)
 }
 
-Likelihood <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, var_e, phi = NULL,
-                       tt_basis = NULL, rho = NULL, intercept = F, log = F) {
+Likelihood <- function(t, y, c, gamma1, gamma2, pi, shape_basis = NULL, knots_shape = NULL, degree = 3,
+                       var_e, phi = NULL, tt_basis = NULL, rho = NULL, intercept = F, log = F) {
   n <- length(t)
   N <- length(c)
 
@@ -176,8 +163,17 @@ Likelihood <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, var
     stop("The number columns in 'y' must match the length of 't'.")
   }
 
+  if (is.null(shape_basis)) {
+    if (is.null(phi) & is.null(tt_basis) & is.null(rho)) {
+      stop("'shape_basis' needs to be provided in the no warping case, i.e. when 'phi',
+           'tt_basis' and 'rho' are not provided")
+    } else if (is.null(knots_shape)) {
+      stop("'knots_shape' knots_shape needs to be provided for the warping case.")
+    }
+  }
+
   if (is.null(phi) & is.null(tt_basis) & is.null(rho)) {
-    modelMean <- meanNoWarp(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept)
+    modelMean <- meanNoWarp(t, c, gamma1, gamma2, pi, shape_basis)
   } else if (!is.null(phi) & !is.null(tt_basis) & !is.null(rho)){
     modelMean <- meanWarp(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, degree, intercept)
   } else if (!is.null(phi) & !is.null(tt_basis) & is.null(rho)){

@@ -16,8 +16,7 @@ lambdaUpdate <- function(gamma1, gamma2, a_l, b_l, Omega){
   return(lambdas)
 }
 
-var_eUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F,
-                               a_e, b_e) {
+var_eUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, shape_basis, a_e, b_e) {
   n <- length(t)
   N <- length(c)
 
@@ -29,7 +28,7 @@ var_eUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree 
     stop("The number columns in 'y' must match the length of 't'.")
   }
 
-  modelMean <- meanNoWarp(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept)
+  modelMean <- meanNoWarp(t, c, gamma1, gamma2, pi, shape_basis)
   squaredSums <- sum(rowSums((y - modelMean) ^ 2))
   var_e <- 1 / stats::rgamma(n = 1, shape = a_e + n * N / 2, rate = b_e + squaredSums / 2)
   return(var_e)

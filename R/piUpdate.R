@@ -1,4 +1,4 @@
-piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3, intercept = F,
+piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, shape_basis,
                             var_e, alpha, rescale = T, label1 = NULL, label2 = NULL,
                             tuning_param = 1000) {
   n <- length(t)
@@ -63,8 +63,8 @@ piUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, knots_shape, degree = 3
       pi_new[1] <- 1 - pi_new[2]
     }
 
-    modelMean_old <- meanNoWarp(t, c[i], gamma1, gamma2, pi_old, knots_shape, degree, intercept)
-    modelMean_new <- meanNoWarp(t, c[i], gamma1, gamma2, pi_new, knots_shape, degree, intercept)
+    modelMean_old <- meanNoWarp(t, c[i], gamma1, gamma2, pi_old, shape_basis)
+    modelMean_new <- meanNoWarp(t, c[i], gamma1, gamma2, pi_new, shape_basis)
     y_i <- y[i, ]
 
     P1 <- -1 / (2 * var_e) * sum((y_i - modelMean_new) ^ 2) +

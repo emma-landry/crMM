@@ -1,4 +1,4 @@
-cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, degree = 3, intercept = F) {
+cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, shape_basis, var_c, var_e) {
   n <- length(t)
   N <- nrow(y)
 
@@ -7,7 +7,7 @@ cUpdate_NoWarp <- function(t, y, gamma1, gamma2, pi, knots_shape, var_c, var_e, 
   }
 
   c <- rep(0, N)
-  modelMean <-meanNoWarp(t, c, gamma1, gamma2, pi, knots_shape, degree, intercept)
+  modelMean <-meanNoWarp(t, c, gamma1, gamma2, pi, shape_basis)
 
   mean_c <- var_c / (var_e/n + var_c) * rowSums(y - modelMean) / n
   var_c <- 1 / (1 / var_c + n / var_e)
