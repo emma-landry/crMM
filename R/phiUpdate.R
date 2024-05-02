@@ -21,6 +21,14 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
     stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
   }
 
+  if (is.unsorted(Upsilon)) {
+    stop("'Upsilon' needs to have ordered values.")
+  }
+
+  if (Upsilon[1] != t[1] | Upsilon[Q] != t[n]) {
+    stop("'Upsilon' needs to satisfy the image constraint.")
+  }
+
   it_num <- it_num + 1
 
   for (i in 1:N) {
@@ -92,6 +100,14 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
   if(length(Upsilon) != Q) {
     stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
+  }
+
+  if (is.unsorted(Upsilon)) {
+    stop("'Upsilon' needs to have ordered values.")
+  }
+
+  if (Upsilon[1] != t[1] | Upsilon[Q] != t[n]) {
+    stop("'Upsilon' needs to satisfy the image constraint.")
   }
 
   it_num <- it_num + 1
@@ -180,6 +196,14 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
     stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
   }
 
+  if (is.unsorted(Upsilon)) {
+    stop("'Upsilon' needs to have ordered values.")
+  }
+
+  if (Upsilon[1] != t[1] | Upsilon[Q] != t[n]) {
+    stop("'Upsilon' needs to satisfy the image constraint.")
+  }
+
   it_num <- it_num + 1
 
   for (i in 1:N) {
@@ -264,6 +288,14 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
   if(length(Upsilon) != Q) {
     stop("The length of 'Upsilon' must match the number of columns in 'phi'.")
+  }
+
+  if (is.unsorted(Upsilon)) {
+    stop("'Upsilon' needs to have ordered values.")
+  }
+
+  if (Upsilon[1] != t[1] | Upsilon[Q] != t[n]) {
+    stop("'Upsilon' needs to satisfy the image constraint.")
   }
 
   it_num <- it_num + 1

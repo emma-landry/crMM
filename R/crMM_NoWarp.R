@@ -92,12 +92,12 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
     lambda1 <- lambda[[1]]
     lambda2 <- lambda[[2]]
 
-    pi <- piUpdate_NoWarp(t = t, y = y, c = c, gamma1 = gamma1, gamma2 = gamma2, shape_basis = shape_basis,
-                          var_e = var_e, alpha = alpha, rescale = rescale_pi,
+    pi <- piUpdate_NoWarp(t = t, y = y, c = c, gamma1 = gamma1, gamma2 = gamma2, pi = pi,
+                          shape_basis = shape_basis, var_e = var_e, alpha = alpha, rescale = rescale_pi,
                           label1 = label1, label2 = label2, tuning_param = tuning_pi)
 
     var_e <- var_eUpdate_NoWarp(t = t, y = y, c = c, gamma1 = gamma1, gamma2 = gamma2, pi = pi,
-                                shape_basis = shape_bassis, a_e = a_e, b_e = b_e)
+                                shape_basis = shape_basis, a_e = a_e, b_e = b_e)
 
     if (wantPAF == T) {
       eval_grid <- seq(t1, tn, length = 5000)
@@ -114,7 +114,7 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
       gamma2_mat[indexing, ] <- gamma2
       c_mat[indexing, ] <- c
       pi1_mat[indexing, ] <- pi[, 1]
-      var_mat[indexing, ] <- c(lamba1, lambda2, var_c, var_e)
+      var_mat[indexing, ] <- c(lambda1, lambda2, var_c, var_e)
 
       if (wantPAF == T) {
         paf_mat[indexing, ] <- peak_location
