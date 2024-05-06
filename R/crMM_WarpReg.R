@@ -1,6 +1,6 @@
-crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = F,
+crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, intercept_shape = F,
                       inc_rho = T, rho_init = 0.5, h, degree_tt = 3, intercept_tt = F,
-                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = T,
+                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = T, B0, V0, B_init = B0,
                       tuning_pi, alpha, label1 = NULL, label2 = NULL, wantPAF = T,
                       gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
                       lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1) {
@@ -8,6 +8,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
   # Lengths ---------------------------------------------------------
   n <- length(t)
   N <- nrow(y)
+  l <- ncol(X)
 
   # Stop messages ---------------------------------------------------
   if (is.unsorted(t)) {
@@ -36,6 +37,8 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   knots_tt <- seq(0, 1, length.out = h + 2)[-c(1, h + 2)]
   tt_basis <- splines::bs(x = t, knots = knots_tt, degree = degree_tt, intercept = intercept_tt)
+
+  U <- MASS::ginv(t(X) %*% X + V0)
 
   # Initialize parameters -------------------------------------------
   lambda1 <- lambda1_init
@@ -71,12 +74,14 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
   pi[, 2] <- 1 - pi[, 1]
 
   Upsilon <- identityTT(Boundary.knots = c(0, 1), knots = knots_tt,
-                         degree = degree_tt, intercept = intercept_tt)
+                        degree = degree_tt, intercept = intercept_tt)
   phi <- matrix(rep(Upsilon, N), nrow = N, byrow = T)
   tau <- rep(0.05, N)
   acceptance_sums <- rep(0, N)
 
   rho <- rho_init
+
+  B <- B_init
 
 
   # Storage matrices ------------------------------------------------
@@ -88,6 +93,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
   var_mat      <- matrix(nrow = num_it, ncol = 5, data = NA)
   pi1_mat      <- matrix(nrow = num_it, ncol = N, data = NA)
   phi_mat      <- matrix(nrow = num_it, ncol = N * Q, data = NA)
+  B_mat        <- matrix(nrow = num_it, ncol = l * (Q - 2), data = NA)
   fit_mat      <- matrix(nrow = num_it, ncol = N * n, data = NA)
   register_mat <- matrix(nrow = num_it, ncol = N * n, data = NA)
   tt_mat       <- matrix(nrow = num_it, ncol = N * n, data = NA)
@@ -112,8 +118,8 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                         var_c = var_c, var_e = var_e, degree = degree_shape, intercept = intercept_shape)
     } else {
       c <- cUpdate_Warp_alt(t = t, y = y, phi = phi, tt_basis = tt_basis,
-                        gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
-                        var_c = var_c, var_e = var_e, degree = degree_shape, intercept = intercept_shape)
+                            gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
+                            var_c = var_c, var_e = var_e, degree = degree_shape, intercept = intercept_shape)
     }
 
     var_c <- var_cUpdate(c = c, a_c = a_c, b_c = b_c)
@@ -166,23 +172,26 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
     }
 
     if (inc_rho == T) {
-      phi_out <- phiUpdate_NoReg(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
-                             gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
-                             degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                             var_phi = var_phi, Upsilon = Upsilon, tau = tau, it_num = i,
-                             acceptance_sums = acceptance_sums)
+      phi_out <- phiUpdate_Reg(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
+                                 gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
+                                 degree = degree_shape, intercept = intercept_shape, var_e = var_e,
+                                 var_phi = var_phi, Upsilon = Upsilon, B = B, X = X, tau = tau, it_num = i,
+                                 acceptance_sums = acceptance_sums)
     } else {
-      phi_out <-  phiUpdate_NoReg_alt(t = t, y = y, c = c, phi = phi, tt_basis = tt_basis,
-                                  gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
-                                  degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                                  var_phi = var_phi, Upsilon = Upsilon, tau = tau, it_num = i,
-                                  acceptance_sums = acceptance_sums)
+      phi_out <-  phiUpdate_Reg_alt(t = t, y = y, c = c, phi = phi, tt_basis = tt_basis,
+                                      gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
+                                      degree = degree_shape, intercept = intercept_shape, var_e = var_e,
+                                      var_phi = var_phi, Upsilon = Upsilon, tau = tau, B = B, X = X,
+                                      it_num = i, acceptance_sums = acceptance_sums)
     }
     phi <- phi_out$phi
     acceptance_sums <- phi_out$acceptance_sums
     tau <- phi_out$tau
 
-    var_phi <- var_phiUpdate_NoReg(phi = phi, Upsilon = Upsilon, a_phi = a_phi, b_phi = b_phi)
+    B <- BetaUpdate(phi = phi, X = X, Upsilon = Upsilon, B0 = B0, V0 = V0, var_phi = var_phi, U = U)
+
+    var_phi <- var_phiUpdate_Reg(phi = phi, Upsilon = Upsilon, a_phi = a_phi, b_phi = b_phi,
+                                 X = X, B = B, B0 = B0, V0 = V0)
 
     if (wantPAF == T) {
       eval_grid <- seq(t1, tn, length = 5000)
@@ -197,10 +206,11 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       indexing <- i - burn_it
       gamma1_mat[indexing, ] <- gamma1
       gamma2_mat[indexing, ] <- gamma2
-      c_mat[indexing, ]     <- c
-      pi1_mat[indexing, ]   <- pi[, 1]
-      var_mat[indexing, ]   <- c(lambda1, lambda2, var_c, var_e, var_phi)
-      phi_mat[indexing, ]   <- matrix(phi, ncol = N * Q)
+      c_mat[indexing, ]      <- c
+      pi1_mat[indexing, ]    <- pi[, 1]
+      var_mat[indexing, ]    <- c(lambda1, lambda2, var_c, var_e, var_phi)
+      phi_mat[indexing, ]    <- matrix(phi, ncol = N * Q)
+      B_mat[indexing, ]      <- matrix(B, nrow = l * (Q - 2))
 
       if (inc_rho == T) {
         rho_mat[indexing, ] <- rho
@@ -247,6 +257,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                 "variance" = var_mat,
                 "phi" = phi_mat,
                 "pi1" = pi1_mat,
+                "B" = B_mat,
                 "fit_sample" = fit_mat,
                 "registered_sample" = register_mat,
                 "stochastic_time" = tt_mat,

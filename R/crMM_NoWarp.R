@@ -112,9 +112,9 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
       indexing <- i - burn_it
       gamma1_mat[indexing, ] <- gamma1
       gamma2_mat[indexing, ] <- gamma2
-      c_mat[indexing, ] <- c
-      pi1_mat[indexing, ] <- pi[, 1]
-      var_mat[indexing, ] <- c(lambda1, lambda2, var_c, var_e)
+      c_mat[indexing, ]      <- c
+      pi1_mat[indexing, ]    <- pi[, 1]
+      var_mat[indexing, ]    <- c(lambda1, lambda2, var_c, var_e)
 
       if (wantPAF == T) {
         paf_mat[indexing, ] <- peak_location

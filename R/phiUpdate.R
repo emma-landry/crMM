@@ -254,7 +254,7 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
   return(metropolis)
 }
 
-phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape,
+phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape,
                                 degree = 3, intercept = F, var_e, var_phi, Upsilon, B, X,
                                 tau, it_num, acceptance_sums) {
   n <- length(t)
