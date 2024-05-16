@@ -1,10 +1,10 @@
 gammaUpdate_NoWarp <- function(t, y, c, pi, shape_basis, Omega, lambda1, lambda2, var_e) {
   n <- length(t)
   N <- length(c)
-  df <- length(shape_basis)
+  df <- ncol(shape_basis)
 
   if (nrow(Omega) != df) {
-    stop("The dimension of 'Omega' needs to match the length of 'shape_basis'.")
+    stop("The dimension of 'Omega' needs to match the number of columns of 'shape_basis'.")
   }
 
   if (nrow(pi) != N) {
@@ -16,7 +16,7 @@ gammaUpdate_NoWarp <- function(t, y, c, pi, shape_basis, Omega, lambda1, lambda2
   }
 
   preMean <- matrix(rep(0, 2 * df), nrow = 2 * df)
-  preCov <- matrix(rep(0, 2 * df), nrow = 2 * df)
+  preCov <- matrix(rep(0, 4 * df ^ 2), nrow = 2 * df)
 
   for (i in 1:N) {
     S_i <- cbind(pi[i, 1] * shape_basis, pi[i, 2] * shape_basis)

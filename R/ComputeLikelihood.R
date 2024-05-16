@@ -1,24 +1,30 @@
 meanNoWarp <- function(t, c, gamma1, gamma2, pi, shape_basis) {
   n <- length(t)
   N <- length(c)
-  df <- length(shape_basis)
+  df <- ncol(shape_basis)
 
   if (length(gamma1) != df | length(gamma2) != df){
     stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
-         implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
+         implied by the length of 'knots_shape', and values of 'degree' and 'intercept'.")
   }
 
-  if (nrow(pi) != N) {
-    stop("The number of rows of 'pi' must match the length of 'c'.")
+  if (is.matrix(pi)) {
+    if (nrow(pi) != N) {
+      stop("The number of rows of 'pi' must match the length of 'c'.")
+    }
+  } else {
+    if (N != 1) {
+      stop("The number of rows of 'pi' must match the length of 'c'.")
+    }
   }
 
-  f1 <- shape_basis %*% gamma1
-  f2 <- shape_basis %*% gamma2
+  f1 <- as.numeric(shape_basis %*% gamma1)
+  f2 <- as.numeric(shape_basis %*% gamma2)
 
   if (N > 1) {
-    modelMean <- c + outer(pi[, 1], gamma1) + outer(pi[, 2], gamma2)
+    modelMean <- c + outer(pi[, 1], f1) + outer(pi[, 2], f2)
   } else {
-    modelMean <- c + pi[1] * gamma1 + pi[2] * gamma2
+    modelMean <- c + pi[1] * f1 + pi[2] * f2
   }
 
   return(modelMean)
@@ -38,7 +44,7 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
 
   if (length(gamma1) != df | length(gamma2) != df) {
     stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
-         implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
+         implied by the length of 'knots_shape', and values of 'degree' and 'intercept'.")
   }
 
   if (min(knots_shape) <= min(t) | max(knots_shape) >= max(t)) {
@@ -107,7 +113,7 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
 
   if (length(gamma1) != df | length(gamma2) != df) {
     stop("The length of 'gamma1' and 'gamma2' needs to match the B-spline dimensions
-         implied by the length of 'knots_shape', and values of'degree' and 'intercept'.")
+         implied by the length of 'knots_shape', and values of 'degree' and 'intercept'.")
   }
 
   if (min(knots_shape) <= min(t) | max(knots_shape) >= max(t)) {

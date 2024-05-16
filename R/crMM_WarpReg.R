@@ -67,8 +67,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
     pi[label1, 2] <- 0
   }
   if (!is.null(label2)) {
-    pi[label2, 1] <- 1
-    pi[label2, 2] <- 0
+    pi[label2, 1] <- 0
+    pi[label2, 2] <- 1
   }
   pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
   pi[, 2] <- 1 - pi[, 1]

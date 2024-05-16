@@ -98,10 +98,14 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
 
   if (is.null(gamma1_init)) {
     gamma1 <- MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda1) %*% t(shape_basis) %*% y_max
+  } else {
+    gamma1 <- gamma1_init
   }
 
   if (is.null(gamma2_init)) {
     gamma2 <- MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda2) %*% t(shape_basis) %*% y_max
+  } else {
+    gamma2 <- gamma2_init
   }
 
   c <- stats::rnorm(n = N, mean = 0, sd = sqrt(var_c))
@@ -113,8 +117,8 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
     pi[label1, 2] <- 0
   }
   if (!is.null(label2)) {
-    pi[label2, 1] <- 1
-    pi[label2, 2] <- 0
+    pi[label2, 1] <- 0
+    pi[label2, 2] <- 1
   }
   pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
   pi[, 2] <- 1 - pi[, 1]
