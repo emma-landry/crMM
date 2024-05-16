@@ -1,7 +1,7 @@
 crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = F,
                       inc_rho = T, rho_init = 0.5, h, degree_tt = 3, intercept_tt = F,
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = T,
-                      tuning_pi, alpha, label1 = NULL, label2 = NULL, wantPAF = T,
+                      tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = F,
                       gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
                       lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1) {
 

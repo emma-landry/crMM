@@ -1,6 +1,66 @@
+#' MCMC sampler for functional mixed membership functional without warping
+#'
+#' @description
+#' `crMM_NoWarp()` runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two
+#' feature mixed membership model assumption. This function does not account for phase variation, see
+#' [crMM_Warp()] and [crMM_WarpReg()] for samplers that include estimation of time-transformation functions.
+#'
+#' @param num_it The number of MCMC iterations (after burn-in).
+#' @param burnin The proportion of the iterations eliminated for burn-in. The default is `0.2`.
+#' The first `burnin * num_it` iterations are discarded, and the sampler then runs for another `num_it`
+#' iterations from which samples are recorded.
+#' @param t The time points at which the data is observed.
+#' @param y A matrix containing the functional observations. Each row corresponds to one observation.
+#' @param p The number of inner knots used to define the B-splines for the common shape functions.
+#' The sampler assumes equally spaced knots between the first and last value of `t`.
+#' @param degree_shape Degree of the piecewise polynomial of B-splines for the common shape functions.
+#' The default is `3` for cubic splines.
+#' @param intercept_shape If `TRUE` an intercept is included in the B-spline basis for the common
+#' shape functions. The default is is `FALSE`.
+#' @param a_e,a_c,a_l Shape parameters of the Inverse Gamma priors.
+#' @param b_e,b_c,b_l Rate parameters of the Inverse Gamma priors.
+#' @param rescale_pi If `TRUE`, the values of the mixed membership vector pi are rescaled such that
+#' at least one observation belongs entirely to each cluster. Default is `TRUE`.
+#' @param tuning_pi Scaling for the shape parameter of the Metropolis proposal Dirichlet distribution
+#' for sampling of pi. Default is `1000`.
+#' @param alpha Shape parameter for the Dirichlet prior for pi.
+#' @param label1,label2 Vector containing the indices of observations labelled as belonging to
+#' feature 1 and feature 2 respectively. Default is `NULL`, in which case observations are not labelled.
+#' @param wantPAF If `TRUE`, the sampler records the PAF value at each iteration (only relevant for
+#' the EEG case study). Default is `FALSE`.
+#' @param gamma1_init,gamma2_init Initial value the B-spline coefficients for the common shape functions.
+#' Default is `NULL`, in which case the sampler obtains coefficients based on the extreme observations.
+#' @param lambda1_init,lambda2_init,var_c_init,var_e_init Initial values for prior variances.
+#' Default is `0.1`.
+#'
+#' @returns A list with the following items:
+#'
+#' * `gamma1`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
+#' for the shape associated with the first feature.
+#' * `gamma2`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
+#' for the shape associated with the second feature.
+#' * `c`: a matrix with `num_it` rows of the posterior samples for the individual intercepts. The number
+#' of columns corresponds to the number of subjects, that is, `nrow(y)`.
+#' * `variance`: a matrix with `num_it` rows of the posterior samples for the variance parameters.
+#' The four columns, in order, correspond to the variances for the first and second feature B-spline
+#' coefficients, the intercepts, and the error term.
+#' * `pi1`: a matrix with `num_it`rows of the posterior samples of the mixed membership component for the
+#' first feature. The number of columns corresponds to the number of subjects, that is,
+#' the number of rows in `y`.
+#' * `fit_sample`: matrix with `num_it` rows of the posterior samples of individual fits. The first
+#'  `lenght(t)` columns give the fit for the first observation, the second `lenght(t)` columns give
+#'   the fit for the second observation, and so on for all the data.
+#' * `fit1`, `fit2`: matrices with `nrow(y)` rows corresponding to the ergodic first and second
+#' sample moment of the fit at points `t` for each of the observations.
+#'
+#' Additionally, if `wantPAF` is `TRUE` then the list also includes a matrix with `num_it` rows of the
+#' posterior samples of the Peak Alpha Frequency.
+#'
+#' @export
+#'
 crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = F,
                         a_e, b_e, a_c, b_c, a_l, b_l, rescale_pi = T,
-                        tuning_pi, alpha, label1 = NULL, label2 = NULL, wantPAF = T,
+                        tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = F,
                         gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
                         lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1) {
 
@@ -128,7 +188,7 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
       r1   <- (indexing - 1.0) / indexing
       r2   <- 1 / indexing
       fit  <- r1 * fit + r2 * current_fit
-      fit2 <- r1 * fit2 + r2* current_fit ^ 2
+      fit2 <- r1 * fit2 + r2 * current_fit ^ 2
     }
   }
   final <- list("gamma1" = gamma1_mat,
