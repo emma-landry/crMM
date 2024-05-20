@@ -1,3 +1,51 @@
+#' MCMC sampler for curve registration with regression for functional mixed membership models
+#'
+#' @description
+#'
+#'
+#'
+#' @param num_it
+#' @param burnin
+#' @param t
+#' @param y
+#' @param X
+#' @param p
+#' @param degree_shape
+#' @param intercept_shape
+#' @param inc_rho
+#' @param rho_init
+#' @param h
+#' @param degree_tt
+#' @param intercept_tt
+#' @param a_e
+#' @param b_e
+#' @param a_c
+#' @param b_c
+#' @param a_l
+#' @param b_l
+#' @param a_phi
+#' @param b_phi
+#' @param rescale_pi
+#' @param B0
+#' @param V0
+#' @param B_init
+#' @param tuning_pi
+#' @param alpha
+#' @param label1
+#' @param label2
+#' @param wantPAF
+#' @param gamma1_init
+#' @param gamma2_init
+#' @param lambda1_init
+#' @param lambda2_init
+#' @param var_c_init
+#' @param var_e_init
+#' @param var_phi_init
+#'
+#' @return
+#' @export
+#'
+#' @examples
 crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, intercept_shape = FALSE,
                       inc_rho = TRUE, rho_init = 0.5, h, degree_tt = 3, intercept_tt = FALSE,
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = TRUE, B0, V0, B_init = B0,
