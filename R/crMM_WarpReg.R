@@ -1,7 +1,7 @@
-crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, intercept_shape = F,
-                      inc_rho = T, rho_init = 0.5, h, degree_tt = 3, intercept_tt = F,
-                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = T, B0, V0, B_init = B0,
-                      tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = F,
+crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, intercept_shape = FALSE,
+                      inc_rho = TRUE, rho_init = 0.5, h, degree_tt = 3, intercept_tt = FALSE,
+                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = TRUE, B0, V0, B_init = B0,
+                      tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = FALSE,
                       gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
                       lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1) {
 
@@ -75,6 +75,10 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
   Upsilon <- identityTT(Boundary.knots = c(0, 1), knots = knots_tt,
                         degree = degree_tt, intercept = intercept_tt)
+
+  Upsilon[1] <- t[1]
+  Upsilon[Q] <- t[n]
+
   phi <- matrix(rep(Upsilon, N), nrow = N, byrow = T)
   tau <- rep(0.05, N)
   acceptance_sums <- rep(0, N)
@@ -185,7 +189,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                                       it_num = i, acceptance_sums = acceptance_sums)
     }
     phi <- phi_out$phi
-    acceptance_sums <- phi_out$acceptance_sums
+    acceptance_sums <- phi_out$acceptance
     tau <- phi_out$tau
 
     B <- BetaUpdate(phi = phi, X = X, Upsilon = Upsilon, B0 = B0, V0 = V0, var_phi = var_phi, U = U)
@@ -223,13 +227,13 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
       # Ergodic mean and current fit
       for (j in 1:N) {
         phi_j <- phi[j, ]
-        tWarp2 <- tt_basis %*% phi_j
-        shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape,
+        tWarp1 <- tt_basis %*% phi_j
+        shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape,
                                     degree = degree_shape, intercept = intercept_shape)
 
         if (inc_rho == T) {
-          tWarp1 <- rho * (tWarp2 - t) + t
-          shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape,
+          tWarp2 <- rho * (tWarp1 - t) + t
+          shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape,
                                       degree = degree_shape, intercept = intercept_shape)
         }
 
@@ -243,7 +247,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
         fit_mat[indexing, ((j - 1) * n + 1): (j * n)] <- current_fit[j, ]
         register_mat[indexing, ((j - 1) * n + 1): (j * n)] <- register_fit[j, ]
-        tt_mat[indexing, ((j - 1) * n + 1): (j * n)] <- tWarp2
+        tt_mat[indexing, ((j - 1) * n + 1): (j * n)] <- tWarp1
       }
       r1   <- (indexing - 1.0) / indexing
       r2   <- 1 / indexing
@@ -259,7 +263,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                 "pi1" = pi1_mat,
                 "B" = B_mat,
                 "fit_sample" = fit_mat,
-                "registered_sample" = register_mat,
+                "registered_fit" = register_mat,
                 "stochastic_time" = tt_mat,
                 "fit" = fit,
                 "fit2" = fit2)

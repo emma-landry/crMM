@@ -37,9 +37,9 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
 
     eta_new <- mvtnorm::rmvnorm(n = 1, mean = eta_old, sigma = tau[i] * diag(Q))
     eta_new[1] <- 0
-    eta_old[Q] <- 1
+    eta_new[Q] <- 1
 
-    phi_new <- juppinv(eta_new)
+    phi_new <- as.numeric(juppinv(eta_new))
 
     modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
@@ -48,17 +48,17 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
 
     y_i <- y[i, ]
 
-    P1 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_new, sigma = var_e * diag(n), logged = T) +
-          mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)],
-                           sigma = var_phi * diag(Q - 2), logged = T)
-    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = eta_old[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P1 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_new, sigma = var_e * diag(n), log = T) +
+          mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)],
+                           sigma = var_phi * diag(Q - 2), log = T)
+    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = eta_old[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
-    P0 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_old, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = eta_new[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P0 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_old, sigma = var_e * diag(n), log = T) +
+          mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = eta_new[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
@@ -66,7 +66,7 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)
@@ -118,9 +118,9 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
     eta_new <- mvtnorm::rmvnorm(n = 1, mean = eta_old, sigma = tau[i] * diag(Q))
     eta_new[1] <- 0
-    eta_old[Q] <- 1
+    eta_new[Q] <- 1
 
-    phi_new <- juppinv(eta_new)
+    phi_new <- as.numeric(juppinv(eta_new))
 
     modelMean_old <- meanWarp_alt(t, c[i], phi_old, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
@@ -129,17 +129,17 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
 
     y_i <- y[i, ]
 
-    P1 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_new, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = eta_old[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P1 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_new, sigma = var_e * diag(n), log = T) +
+      mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = eta_old[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
-    P0 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_old, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = eta_new[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P0 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_old, sigma = var_e * diag(n), log = T) +
+      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = eta_new[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
@@ -147,7 +147,7 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)
@@ -212,9 +212,9 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
 
     eta_new <- mvtnorm::rmvnorm(n = 1, mean = eta_old, sigma = tau[i] * diag(Q))
     eta_new[1] <- 0
-    eta_old[Q] <- 1
+    eta_new[Q] <- 1
 
-    phi_new <- juppinv(eta_new)
+    phi_new <- as.numeric(juppinv(eta_new))
 
     modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
@@ -223,17 +223,17 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
 
     y_i <- y[i, ]
 
-    P1 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_new, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = eta_old[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P1 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_new, sigma = var_e * diag(n), log = T) +
+      mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = eta_old[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
-    P0 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_old, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = eta_new[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P0 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_old, sigma = var_e * diag(n), log = T) +
+      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = eta_new[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
@@ -241,7 +241,7 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)
@@ -306,9 +306,9 @@ phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
 
     eta_new <- mvtnorm::rmvnorm(n = 1, mean = eta_old, sigma = tau[i] * diag(Q))
     eta_new[1] <- 0
-    eta_old[Q] <- 1
+    eta_new[Q] <- 1
 
-    phi_new <- juppinv(eta_new)
+    phi_new <- as.numeric(juppinv(eta_new))
 
     modelMean_old <- meanWarp_alt(t, c[i], phi_old, tt_basis, gamma1, gamma2, pi[i, ],
                                   knots_shape, degree, intercept)
@@ -317,17 +317,17 @@ phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
 
     y_i <- y[i, ]
 
-    P1 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_new, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mu = eta_old[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P1 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_new, sigma = var_e * diag(n), log = T) +
+      mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q1 <- mvtnorm::dmvnorm(x = eta_new[-c(1, Q)], mean = eta_old[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
-    P0 <- mvtnorm::dmvnorm(x = y_i, mu = modelMean_old, sigma = var_e * diag(n), logged = T) +
-      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
-                       sigma = var_phi * diag(Q - 2), logged = T)
-    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mu = eta_new[-c(1, Q)],
-                           sigma = tau[i] * diag(Q - 2), logged = T)
+    P0 <- mvtnorm::dmvnorm(x = y_i, mean = modelMean_old, sigma = var_e * diag(n), log = T) +
+      mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = jupp(Upsilon)[-c(1, Q)] + t(B) %*% X[i, ],
+                       sigma = var_phi * diag(Q - 2), log = T)
+    Q0 <- mvtnorm::dmvnorm(x = eta_old[-c(1, Q)], mean = eta_new[-c(1, Q)],
+                           sigma = tau[i] * diag(Q - 2), log = T)
 
     ratio <- (P1 - Q1) - (P0 - Q0)
 
@@ -335,7 +335,7 @@ phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + acceptance_sums[i] / it_num - 0.3) / sqrt(it_num)
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)

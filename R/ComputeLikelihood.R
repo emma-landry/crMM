@@ -34,7 +34,12 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
-  Q <- ncol(phi)
+
+  if (is.matrix(phi)){
+    Q <- ncol(phi)
+  } else {
+    Q <- length(phi)
+  }
 
   if (intercept == F) {
     df <- p + degree
@@ -52,17 +57,28 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
          and largest value of 't'.")
   }
 
-  if (nrow(pi) != N) {
-    stop("The number of rows of 'pi' must match the length of 'c'.")
+  if (is.matrix(pi)) {
+    if (nrow(pi) != N) {
+      stop("The number of rows of 'pi' must match the length of 'c'.")
+    }
+  } else {
+    if (N != 1) {
+      stop("The number of rows of 'pi' must match the length of 'c'.")
+    }
   }
 
-  if (nrow(phi) != N) {
-    stop("The number of rows of 'phi' must match the length of 'c'.")
+  if (is.matrix(phi)) {
+    if (nrow(phi) != N) {
+      stop("The number of rows of 'phi' must match the length of 'c'.")
+    }
+  } else {
+    if (N != 1) {
+      stop("The number of rows of 'phi' must match the length of 'c'.")
+    }
   }
 
-  if (length(tt_basis) != Q) {
-    stop("The time-transformation spline basis 'tt_basis' must have the same length as the
-         number of columns in 'phi'.")
+  if (ncol(tt_basis) != Q) {
+    stop("The time-transformation spline basis 'tt_basis' must have the same number of columns as 'phi'.")
   }
 
   if (rho < 0 | rho > 1) {
@@ -70,8 +86,8 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
   }
 
   if (N == 1) {
-    tWarp2 <- tt_basis %*% phi
-    tWarp1 <- rho * (tWarp1 - t) + t
+    tWarp1 <- tt_basis %*% phi
+    tWarp2 <- rho * (tWarp1 - t) + t
 
     shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
     shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
@@ -84,8 +100,8 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
   } else {
     modelMean <- matrix(data = NA, nrow = N, ncol = n)
     for (i in 1:N) {
-      tWarp2 <- tt_basis %*% phi[i, ]
-      tWarp1 <- rho * (tWarp1 - t) + t
+      tWarp1 <- tt_basis %*% phi[i, ]
+      tWarp2 <- rho * (tWarp1 - t) + t
 
       shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
       shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
@@ -103,7 +119,12 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
-  Q <- ncol(phi)
+
+  if (is.matrix(phi)){
+    Q <- ncol(phi)
+  } else {
+    Q <- length(phi)
+  }
 
   if (intercept == F) {
     df <- p + degree
@@ -121,17 +142,28 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
          and largest value of 't'.")
   }
 
-  if (nrow(pi) != N) {
-    stop("The number of rows of 'pi' must match the length of 'c'.")
+  if (is.matrix(pi)) {
+    if (nrow(pi) != N) {
+      stop("The number of rows of 'pi' must match the length of 'c'.")
+    }
+  } else {
+    if (N != 1) {
+      stop("The number of rows of 'pi' must match the length of 'c'.")
+    }
   }
 
-  if (nrow(phi) != N) {
-    stop("The number of rows of 'phi' must match the length of 'c'.")
+  if (is.matrix(phi)) {
+    if (nrow(phi) != N) {
+      stop("The number of rows of 'phi' must match the length of 'c'.")
+    }
+  } else {
+    if (N != 1) {
+      stop("The number of rows of 'phi' must match the length of 'c'.")
+    }
   }
 
-  if (length(tt_basis) != Q) {
-    stop("The time-transformation spline basis 'tt_basis' must have the same length as the
-         number of columns in 'phi'.")
+  if (ncol(tt_basis) != Q) {
+    stop("The time-transformation spline basis 'tt_basis' must have the same number of columns as 'phi'.")
   }
 
   if (N == 1){

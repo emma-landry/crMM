@@ -17,7 +17,7 @@ identityTT <- function(Boundary.knots, knots = NULL, df = NULL, degree = 3, inte
       stop("At least one element in 'knots' is less than or equal to the lower boundary knot.")
     }
 
-    if (max(knots) <= tn) {
+    if (max(knots) >= tn) {
       stop("At least one element in 'knots' is greater than or equal to the upper boundary knot.")
     }
 

@@ -31,7 +31,7 @@
 #' @param gamma1_init,gamma2_init Initial value the B-spline coefficients for the common shape functions.
 #' Default is `NULL`, in which case the sampler obtains coefficients based on the extreme observations.
 #' @param lambda1_init,lambda2_init,var_c_init,var_e_init Initial values for prior variances.
-#' Default is `0.1`.
+#' Default is `0.1`, except for `var_e_init` which is `1`.
 #'
 #' @returns A list with the following items:
 #'
@@ -58,9 +58,9 @@
 #'
 #' @export
 #'
-crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = F,
-                        a_e, b_e, a_c, b_c, a_l, b_l, rescale_pi = T,
-                        tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = F,
+crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
+                        a_e, b_e, a_c, b_c, a_l, b_l, rescale_pi = TRUE,
+                        tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = FALSE,
                         gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
                         lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1) {
 
@@ -167,8 +167,8 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
       eval_grid <- seq(t1, tn, length = 5000)
       spline_eval_max <- splines::bs(x = eval_grid, knots = knots_shape,
                                      degree = degree_shape, intercept = intercept_shape)
-      shape2_eval <- gamma2 %*% t(spline_eval_max)
-      peak_location <- eval_grid[(order(shape2_eval, decreasing = T)[1])]
+      shape1_eval <- gamma1 %*% t(spline_eval_max)
+      peak_location <- eval_grid[(order(shape1_eval, decreasing = T)[1])]
     }
 
     # Storing the samples

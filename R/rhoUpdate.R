@@ -1,4 +1,4 @@
-rhoUpdate <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, knots_shape,
+rhoUpdate <- function(t, y, c, phi, rho, tt_basis, pi, gamma1, gamma2, knots_shape,
                       degree = 3, intercept = F, var_e) {
 
   n <- length(t)
@@ -25,8 +25,8 @@ rhoUpdate <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, knots_shape,
                               knots_shape, degree, intercept)
 
     y_i <- y[i, ]
-    P1 <- P1 + mvtnorm::dmvnorm(x = y_i, mean = modelMean_new, sigma = var_e * diag(n), logged = T)
-    P0 <- P0 + mvtnorm::dmvnorm(x = y_i, mean = modelMean_old, sigma = var_e * diag(n), logged = T)
+    P1 <- P1 + mvtnorm::dmvnorm(x = y_i, mean = modelMean_new, sigma = var_e * diag(n), log = T)
+    P0 <- P0 + mvtnorm::dmvnorm(x = y_i, mean = modelMean_old, sigma = var_e * diag(n), log = T)
   }
 
   Q1 <- stats::dbeta(x = rho_new, shape1 = 1/ (1 - rho_old), shape2 = 2, log = T)

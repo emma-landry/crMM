@@ -75,9 +75,8 @@ gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega
     stop("The number of rows of 'phi' must match the length of 'c'.")
   }
 
-  if (length(tt_basis) != Q) {
-    stop("The time-transformation spline basis 'tt_basis' must have the same length as the
-         number of columns in 'phi'.")
+  if (ncol(tt_basis) != Q) {
+    stop("The time-transformation spline basis 'tt_basis' must have the same number of columns as 'phi'.")
   }
 
   if (rho < 0 | rho > 1) {
@@ -85,14 +84,14 @@ gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega
   }
 
   preMean <- matrix(rep(0, 2 * df), nrow = 2 * df)
-  preCov <- matrix(rep(0, 2 * df), nrow = 2 * df)
+  preCov <- matrix(rep(0, 4 * df ^ 2), nrow = 2 * df)
 
   shape_basis <- splines::bs(x = t, knots = knots_shape, degree = degree, intercept = intercept)
 
   for (i in 1:N) {
     phi_i <- phi[i, ]
-    tWarp2 <- tt_basis %*% phi
-    tWarp1 <- rho * (tWarp1 - t) + t
+    tWarp1 <- tt_basis %*% phi_i
+    tWarp2 <- rho * (tWarp1 - t) + t
 
     shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape, degree = degree, intercept = intercept)
     shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape, degree = degree, intercept = intercept)
@@ -153,19 +152,18 @@ gammaUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, pi, knots_shape, Omega,
     stop("The number of rows of 'phi' must match the length of 'c'.")
   }
 
-  if (length(tt_basis) != Q) {
-    stop("The time-transformation spline basis 'tt_basis' must have the same length as the
-         number of columns in 'phi'.")
+  if (ncol(tt_basis) != Q) {
+    stop("The time-transformation spline basis 'tt_basis' must have the same number of columns as 'phi'.")
   }
 
   preMean <- matrix(rep(0, 2 * df), nrow = 2 * df)
-  preCov <- matrix(rep(0, 2 * df), nrow = 2 * df)
+  preCov <- matrix(rep(0, 4 * df ^ 2), nrow = 2 * df)
 
   shape_basis <- splines::bs(x = t, knots = knots_shape, degree = degree, intercept = intercept)
 
   for (i in 1:N) {
     phi_i <- phi[i, ]
-    tWarp <- tt_basis %*% phi
+    tWarp <- tt_basis %*% phi_i
 
     shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
 

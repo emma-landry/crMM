@@ -1,7 +1,67 @@
-crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = F,
-                      inc_rho = T, rho_init = 0.5, h, degree_tt = 3, intercept_tt = F,
-                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = T,
-                      tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = F,
+#' MCMC sampler for curve registration for functional mixed membership models
+#'
+#' @description
+#' `crMM_Warp()` runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two
+#' feature mixed membership model assumption. This function incorporates curve registration to account for
+#' phase variation. See [crMM_WarpReg()] for a sampler that adds covariate information in the estimation
+#' of time-transformation functions through linear regression.
+#'
+#' @inheritParams crMM_NoWarp
+#' @param inc_rho If `TRUE`, a parameter that rescales the time transformation functions for the second
+#' feature towards the identity. Default is `TRUE`.
+#' @param rho_init Initial value for the time-transformation rescaling parameter. Default is `0.5`.
+#' @param h The number of inner knots used to define the B-splines for the time-transformation functions.
+#' The sampler assumes equally spaced knots between the first and last value of `t`.
+#' @param degree_tt Degree of the piecewise polynomial of B-splines for the time-transformation functions.
+#' The default is `3` for cubic splines.
+#' @param intercept_tt If `TRUE` an intercept is included in the B-spline basis for the time-transformation
+#'functions. The default is is `FALSE`.
+#' @param a_e,a_c,a_l,a_phi Shape parameters of the Inverse Gamma priors.
+#' @param b_e,b_c,b_l,b_phi Rate parameters of the Inverse Gamma priors.
+#' @param lambda1_init,lambda2_init,var_c_init,var_e_init,var_phi_init Initial values for prior variances.
+#' Default is `0.1`, except for `var_e_init` and `var_phi_init` which is `1`.
+#'
+#' @return A list with the following items:
+#'
+#' * `gamma1`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
+#' for the shape associated with the first feature.
+#' * `gamma2`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
+#' for the shape associated with the second feature.
+#' * `c`: a matrix with `num_it` rows of the posterior samples for the individual intercepts. The number
+#' of columns corresponds to the number of subjects, that is, `nrow(y)`.
+#' * `variance`: a matrix with `num_it` rows of the posterior samples for the variance parameters.
+#' The five columns, in order, correspond to the variances for the first and second feature B-spline
+#' coefficients, the intercepts, the error term, and the time-transformation spline coefficients.
+#' * `phi`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficients for the
+#' individual time-transformation functions. The coefficients across individuals are stacked in order into
+#' one vector corresponding to a row at each iteration.
+#' * `pi1`: a matrix with `num_it`rows of the posterior samples of the mixed membership component for the
+#' first feature. The number of columns corresponds to the number of subjects, that is,
+#' the number of rows in `y`.
+#' * `fit_sample`: matrix with `num_it` rows of the posterior samples of individual fits. The first
+#'  `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
+#'   the fit for the second observation, and so on for all the data.
+#' * `registered_fit`: matrix with `num_it` rows of the posterior samples of individual aligned fits. The first
+#'  `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
+#'   the fit for the second observation, and so on for all the data.
+#' * `stochastic_time`: matrix with `num_it` rows of the posterior samples of the individual stochastic
+#' (aligned) time. The first `length(t)` columns give the times for the first observation, the second
+#' `length(t)` columns give the times for the second observation, and so on for all the data.
+#' * `fit1`, `fit2`: matrices with `nrow(y)` rows corresponding to the ergodic first and second
+#' sample moment of the fit at points `t` for each of the observations.
+#'
+#' Additionally, if `wantPAF` is `TRUE` then the list also includes a matrix with `num_it` rows of the
+#' posterior samples of the Peak Alpha Frequency.
+#'
+#' Also, if `inc_rho` is `TRUE`, the list includes a matrix with `num_it` rows of the posterior samples
+#' for the time-transformation rescaling parameter.
+#'
+#' @export
+#'
+crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
+                      inc_rho = TRUE, rho_init = 0.5, h, degree_tt = 3, intercept_tt = FALSE,
+                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = TRUE,
+                      tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = FALSE,
                       gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
                       lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1) {
 
@@ -16,6 +76,11 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   if (ncol(y) != n) {
     stop("The number columns in 'y' must match the length of 't'.")
+  }
+
+  if (rho_init < 0 | rho_init > 1) {
+    rho_init <- 0.5
+    warning("`rho_init` must be a value between 0 and 1. It has been set to the default, 0.5.")
   }
 
   # Rescale time points ---------------------------------------------
@@ -72,6 +137,9 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   Upsilon <- identityTT(Boundary.knots = c(0, 1), knots = knots_tt,
                          degree = degree_tt, intercept = intercept_tt)
+  Upsilon[1] <- t[1]
+  Upsilon[Q] <- t[n]
+
   phi <- matrix(rep(Upsilon, N), nrow = N, byrow = T)
   tau <- rep(0.05, N)
   acceptance_sums <- rep(0, N)
@@ -106,6 +174,8 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   # Sampling --------------------------------------------------------
   for (i in 1:total_it) {
+    if (i %% 100 == 0) print(i)
+
     if (inc_rho == T) {
       c <- cUpdate_Warp(t = t, y = y, phi = phi, rho = rho, tt_basis = tt_basis,
                         gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
@@ -160,9 +230,9 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                                     degree = degree_shape, intercept = intercept_shape, a_e = a_e, b_e = b_e)
     }
     if (inc_rho == T) {
-      rho <- rhoUpdate(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
+      rho <- rhoUpdate(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
                        gamma1 = gamma1, gamma2 = gamma2, knots_shape = knots_shape,
-                       degree = degree_shape, intercept = intercept_shape)
+                       degree = degree_shape, intercept = intercept_shape, var_e = var_e)
     }
 
     if (inc_rho == T) {
@@ -179,7 +249,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                                   acceptance_sums = acceptance_sums)
     }
     phi <- phi_out$phi
-    acceptance_sums <- phi_out$acceptance_sums
+    acceptance_sums <- phi_out$acceptance
     tau <- phi_out$tau
 
     var_phi <- var_phiUpdate_NoReg(phi = phi, Upsilon = Upsilon, a_phi = a_phi, b_phi = b_phi)
@@ -188,8 +258,8 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       eval_grid <- seq(t1, tn, length = 5000)
       spline_eval_max <- splines::bs(x = eval_grid, knots = knots_shape,
                                      degree = degree_shape, intercept = intercept_shape)
-      shape2_eval <- gamma2 %*% t(spline_eval_max)
-      peak_location <- eval_grid[(order(shape2_eval, decreasing = T)[1])]
+      shape1_eval <- gamma1 %*% t(spline_eval_max)
+      peak_location <- eval_grid[(order(shape1_eval, decreasing = T)[1])]
     }
 
     # Storing the samples
@@ -213,13 +283,13 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       # Ergodic mean and current fit
       for (j in 1:N) {
         phi_j <- phi[j, ]
-        tWarp2 <- tt_basis %*% phi_j
-        shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape,
+        tWarp1 <- tt_basis %*% phi_j
+        shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape,
                                     degree = degree_shape, intercept = intercept_shape)
 
         if (inc_rho == T) {
-          tWarp1 <- rho * (tWarp2 - t) + t
-          shape_basis1 <- splines::bs(x = tWarp1, knots = knots_shape,
+          tWarp2 <- rho * (tWarp1 - t) + t
+          shape_basis2 <- splines::bs(x = tWarp2, knots = knots_shape,
                                       degree = degree_shape, intercept = intercept_shape)
         }
 
@@ -233,7 +303,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
         fit_mat[indexing, ((j - 1) * n + 1): (j * n)] <- current_fit[j, ]
         register_mat[indexing, ((j - 1) * n + 1): (j * n)] <- register_fit[j, ]
-        tt_mat[indexing, ((j - 1) * n + 1): (j * n)] <- tWarp2
+        tt_mat[indexing, ((j - 1) * n + 1): (j * n)] <- tWarp1
       }
       r1   <- (indexing - 1.0) / indexing
       r2   <- 1 / indexing
@@ -248,7 +318,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                 "phi" = phi_mat,
                 "pi1" = pi1_mat,
                 "fit_sample" = fit_mat,
-                "registered_sample" = register_mat,
+                "registered_fit" = register_mat,
                 "stochastic_time" = tt_mat,
                 "fit" = fit,
                 "fit2" = fit2)
