@@ -1,51 +1,60 @@
 #' MCMC sampler for curve registration with regression for functional mixed membership models
 #'
 #' @description
+#' `crMM_WarpReg()` runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two-feature
+#' mixed membership model assumption. This function incorporates curve registration to account for phase variation.
+#' It differs from [crMM_Warp()] in that it includes covariate information in the estimation of the
+#' time-transformation functions through linear regression.
 #'
 #'
-#'
-#' @param num_it
-#' @param burnin
-#' @param t
-#' @param y
-#' @param X
-#' @param p
-#' @param degree_shape
-#' @param intercept_shape
-#' @param inc_rho
-#' @param rho_init
-#' @param h
-#' @param degree_tt
-#' @param intercept_tt
-#' @param a_e
-#' @param b_e
-#' @param a_c
-#' @param b_c
-#' @param a_l
-#' @param b_l
-#' @param a_phi
-#' @param b_phi
-#' @param rescale_pi
-#' @param B0
-#' @param V0
-#' @param B_init
-#' @param tuning_pi
-#' @param alpha
-#' @param label1
-#' @param label2
-#' @param wantPAF
-#' @param gamma1_init
-#' @param gamma2_init
-#' @param lambda1_init
-#' @param lambda2_init
-#' @param var_c_init
-#' @param var_e_init
-#' @param var_phi_init
+#' @inheritParams crMM_Warp
+#' @param X Matrix of covariates for time-transformation regression, where each row corresponds to covariates for
+#' one observation.
+#' @param B0 Prior mean matrix for the regression coefficient.
+#' @param V0 Prior row covariance matrix for the regression coefficient.
+#' @param B_init Initial value for the regression coefficient. Default is `B0`.
 #'
 #' @return
+#' A list with the following items:
+#'
+#' * `gamma1`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
+#' for the shape associated with the first feature.
+#' * `gamma2`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
+#' for the shape associated with the second feature.
+#' * `c`: a matrix with `num_it` rows of the posterior samples for the individual intercepts. The number
+#' of columns corresponds to the number of subjects, that is, `nrow(y)`.
+#' * `variance`: a matrix with `num_it` rows of the posterior samples for the variance parameters.
+#' The five columns, in order, correspond to the variances for the first and second feature B-spline
+#' coefficients, the intercepts, the error term, and the time-transformation spline coefficients.
+#' * `phi`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficients for the
+#' individual time-transformation functions. The coefficients across individuals are stacked in order into
+#' one vector corresponding to a row at each iteration.
+#' * `pi1`: a matrix with `num_it` rows of the posterior samples of the mixed membership component for the
+#' first feature. The number of columns corresponds to the number of subjects, that is,
+#' the number of rows in `y`.
+#' * `B`: a matrix with `num_it` rows of the posterior samples of the time-transformation regression
+#' coefficient matrix. The entries of the matrix are column-stacked into a vector, the columns correspond
+#' to the entries.
+#' * `fit_sample`: matrix with `num_it` rows of the posterior samples of individual fits. The first
+#'  `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
+#'   the fit for the second observation, and so on for all the data.
+#' * `registered_fit`: matrix with `num_it` rows of the posterior samples of individual aligned fits. The first
+#'  `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
+#'   the fit for the second observation, and so on for all the data.
+#' * `stochastic_time`: matrix with `num_it` rows of the posterior samples of the individual stochastic
+#' (aligned) time. The first `length(t)` columns give the times for the first observation, the second
+#' `length(t)` columns give the times for the second observation, and so on for all the data.
+#' * `fit1`, `fit2`: matrices with `nrow(y)` rows corresponding to the ergodic first and second
+#' sample moment of the fit at points `t` for each of the observations.
+#'
+#' Additionally, if `wantPAF` is `TRUE` then the list also includes a matrix with `num_it` rows of the
+#' posterior samples of the Peak Alpha Frequency.
+#'
+#' Also, if `inc_rho` is `TRUE`, the list includes a matrix with `num_it` rows of the posterior samples
+#' for the time-transformation rescaling parameter.
+#'
 #' @export
 #'
-#' @examples
 crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, intercept_shape = FALSE,
                       inc_rho = TRUE, rho_init = 0.5, h, degree_tt = 3, intercept_tt = FALSE,
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = TRUE, B0, V0, B_init = B0,
@@ -218,7 +227,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                                     degree = degree_shape, intercept = intercept_shape, a_e = a_e, b_e = b_e)
     }
     if (inc_rho == T) {
-      rho <- rhoUpdate(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
+      rho <- rhoUpdate(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
                        gamma1 = gamma1, gamma2 = gamma2, knots_shape = knots_shape,
                        degree = degree_shape, intercept = intercept_shape)
     }
