@@ -173,6 +173,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
   # Sampling --------------------------------------------------------
   for (i in 1:total_it) {
+    if (i %% 100 == 0) print(i)
+
     if (inc_rho == T) {
       c <- cUpdate_Warp(t = t, y = y, phi = phi, rho = rho, tt_basis = tt_basis,
                         gamma1 = gamma1, gamma2 = gamma2, pi = pi, knots_shape = knots_shape,
@@ -229,7 +231,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
     if (inc_rho == T) {
       rho <- rhoUpdate(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
                        gamma1 = gamma1, gamma2 = gamma2, knots_shape = knots_shape,
-                       degree = degree_shape, intercept = intercept_shape)
+                       degree = degree_shape, intercept = intercept_shape, var_e = var_e)
     }
 
     if (inc_rho == T) {

@@ -2,3 +2,4 @@
 
 export(crMM_NoWarp)
 export(crMM_Warp)
+export(crMM_WarpReg)

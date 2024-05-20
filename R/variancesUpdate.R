@@ -129,10 +129,11 @@ var_phiUpdate_Reg <- function(phi, Upsilon, a_phi, b_phi, X, B, B0, V0) {
     eta_i <- jupp(phi_i)[-c(1, Q)]
     var_sum <- var_sum + t(eta_i - jupp_mean - t(B) %*% X[i, ]) %*% (eta_i - jupp_mean - t(B) %*% X[i, ])
   }
+
   posterior_a <- a_phi + (Q - 2) * (N + l) / 2
   B_vec <- matrix(B, nrow = (Q - 2) * l)
   B0_vec <- matrix(B0, nrow = (Q - 2) * l)
-  posterior_b <- b_phi + var_sum / 2 +(B_vec - B0_vec) %*% kronecker(diag(Q - 2), V0) %*% (B_vec - B0_vec) / 2
+  posterior_b <- b_phi + var_sum / 2 + t(B_vec - B0_vec) %*% kronecker(diag(Q - 2), V0) %*% (B_vec - B0_vec) / 2
   var_phi <- 1 / stats::rgamma(n = 1, shape = posterior_a, rate = posterior_b)
   return(var_phi)
 }

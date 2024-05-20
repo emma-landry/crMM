@@ -29,7 +29,7 @@ BetaUpdate <- function(phi, X, Upsilon, B0, V0, var_phi, U){
 
   jupp_mean <- jupp(Upsilon)[-c(1, Q)]
   phiT <- t(phi)
-  jupp_phiT <- apply(phiT, 2, jupp)
+  jupp_phiT <- apply(phiT, 2, jupp)[-c(1, Q),]
   H <- t(jupp_phiT)
   posterior_mean <- U %*% (t(X) %*% (H - jupp_mean) + V0 %*% B0)
   B <- matrixNormal::rmatnorm(s = 1, M = posterior_mean, U = U, V = var_phi * diag(Q - 2))
