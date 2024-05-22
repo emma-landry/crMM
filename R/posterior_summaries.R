@@ -1,1 +1,3 @@
-posterior_shape <- function()
+posterior_shape <- function(x){
+
+}
