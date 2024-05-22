@@ -28,7 +28,7 @@
 posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
                             moments = c('mean'), eval_points = 1000) {
   if (!inherits(crMM_samples, "crMM_Obj")) {
-    stop("`crMM_samples` must be an object of class `crMM_Obj`.")
+    stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
   }
 
   df <- ncol(crMM_samples$gamma1)
@@ -103,4 +103,59 @@ posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
 
   return(outputs)
 
+}
+
+#' Relative Mean Integrated Square Error
+#'
+#' @description
+#' `r_mise()` computes the relative mean integrated square error (R-MISE) between two functions.
+#'
+#' @details
+#' The user may provide a single reference `true` function, and multiple fitted functions `fit`, as long
+#' as the coordinates at which they are observed coincide. The opposite is not possible: one cannot provide
+#' multiple `true` functions, but provide a single `fit` function.
+#'
+#'
+#' @param true A vector or matrix with observed true values of a function. If a matrix, each row corresponds
+#' to a different function.
+#' @param fit A vector or matrix with obersved fitted values of a function. If a matrix, each row corresponds
+#' to a different function.
+#'
+#' @return The R-MISE value. If `fit` is a matrix, then the output is a vector of R-MISE values.
+#' @export
+#'
+r_mise <- function(true, fit) {
+  if (is.matrix(true)) {
+    N <- nrow(true)
+    n <- ncol(true)
+
+    if (!is.matrix(fit)) {
+      stop("The dimensions of 'fit' do not match those of 'true'.")
+    }
+
+    if (nrow(fit) != N | ncol(fit) != n) {
+      stop("The dimensions of 'fit' do not match those of 'true'.")
+    }
+
+    mise <- apply(true - fit, 1, sum) ^ 2
+    rmise <- mise / apply(true ^ 2, 1, sum)
+  } else {
+    n <- length(true)
+
+    if (is.matrix(fit)) {
+      if (ncol(fit) != n) {
+        stop("The number of columns in 'fit' must match the length of 'true'.")
+      }
+      mise <- apply(true - fit, 1, sum) ^ 2
+      rmise <- mise / apply(true ^ 2, 1, sum)
+
+    } else {
+        if (length(fit) != n) {
+          stop("The length of 'fit' must match the length of 'true'.")
+        }
+      mise <- sum((true - fit) ^ 2)
+      rmise <- mise / sum(true ^ 2)
+    }
+  }
+  return(rmise)
 }
