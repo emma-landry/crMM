@@ -177,7 +177,7 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
     modelMean <- matrix(data = NA, nrow = N, ncol = n)
     for (i in 1:N) {
       tWarp <- tt_basis %*% phi[i, ]
-      splines_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
+      shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
       f1 <- shape_basis %*% gamma1
       f2 <- shape_basis %*% gamma2
 
