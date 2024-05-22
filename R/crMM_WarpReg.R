@@ -299,7 +299,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
         if (inc_rho == T) {
           current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis1 %*% gamma1 + pi[j, 2] * shape_basis2 %*% gamma2
         } else {
-          current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis2 %*% gamma1 + pi[j, 2] * shape_basis2 %*% gamma2
+          current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis1 %*% gamma1 + pi[j, 2] * shape_basis1 %*% gamma2
         }
 
         register_fit[j, ] <- c[j] + pi[j, 1] * shape_basis %*% gamma1 + pi[j, 2] * shape_basis %*% gamma2
