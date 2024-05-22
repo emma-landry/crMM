@@ -33,7 +33,7 @@
 #' @param lambda1_init,lambda2_init,var_c_init,var_e_init Initial values for prior variances.
 #' Default is `0.1`, except for `var_e_init` which is `1`.
 #'
-#' @returns A list with the following items:
+#' @returns An object of class `crMM_Obj`, consisting of a list with the following items:
 #'
 #' * `gamma1`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
 #' for the shape associated with the first feature.
@@ -195,19 +195,27 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
       fit2 <- r1 * fit2 + r2 * current_fit ^ 2
     }
   }
-  final <- list("gamma1" = gamma1_mat,
-                "gamma2" = gamma2_mat,
-                "c" = c_mat,
-                "variance" = var_mat,
-                "pi1" = pi1_mat,
-                "fit_sample" = fit_mat,
-                "fit" = fit,
-                "fit2" = fit2)
 
   if (wantPAF == T) {
-    final$PAF <- paf_mat
+    final <- construct_crMM(gamma1 = gamma1_mat,
+                            gamma2 = gamma2_mat,
+                            c = c_mat,
+                            variance = var_mat,
+                            pi1 = pi1_mat,
+                            fit_sample = fit_mat,
+                            fit = fit,
+                            fit2 = fit2,
+                            PAF = paf_mat)
+  } else {
+    final <- construct_crMM(gamma1 = gamma1_mat,
+                            gamma2 = gamma2_mat,
+                            c = c_mat,
+                            variance = var_mat,
+                            pi1 = pi1_mat,
+                            fit_sample = fit_mat,
+                            fit = fit,
+                            fit2 = fit2)
   }
-
   return(final)
 }
 

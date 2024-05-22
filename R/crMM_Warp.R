@@ -311,26 +311,60 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       fit2 <- r1 * fit2 + r2* current_fit ^ 2
     }
   }
-  final <- list("gamma1" = gamma1_mat,
-                "gamma2" = gamma2_mat,
-                "c" = c_mat,
-                "variance" = var_mat,
-                "phi" = phi_mat,
-                "pi1" = pi1_mat,
-                "fit_sample" = fit_mat,
-                "registered_fit" = register_mat,
-                "stochastic_time" = tt_mat,
-                "fit" = fit,
-                "fit2" = fit2)
 
-  if(inc_rho == T) {
-    final$rho <- rho_mat
+  if (inc_rho == T & wantPAF == T) {
+    final <- construct_crMM(gamma1 = gamma1_mat,
+                            gamma2 = gamma2_mat,
+                            c = c_mat,
+                            variance = var_mat,
+                            phi = phi,
+                            rho = rho_mat,
+                            pi1 = pi1_mat,
+                            fit_sample = fit_mat,
+                            registered_fit = register_mat,
+                            stochastic_time = tt_mat,
+                            fit = fit,
+                            fit2 = fit2,
+                            PAF = paf_mat)
+  } else if (inc_rho == T & wantPAF == F){
+    final <- construct_crMM(gamma1 = gamma1_mat,
+                            gamma2 = gamma2_mat,
+                            c = c_mat,
+                            variance = var_mat,
+                            phi = phi,
+                            rho = rho_mat,
+                            pi1 = pi1_mat,
+                            fit_sample = fit_mat,
+                            registered_fit = register_mat,
+                            stochastic_time = tt_mat,
+                            fit = fit,
+                            fit2 = fit2)
+  } else if (inc_rho == F & wantPAF == T) {
+    final <- construct_crMM(gamma1 = gamma1_mat,
+                            gamma2 = gamma2_mat,
+                            c = c_mat,
+                            variance = var_mat,
+                            phi = phi,
+                            pi1 = pi1_mat,
+                            fit_sample = fit_mat,
+                            registered_fit = register_mat,
+                            stochastic_time = tt_mat,
+                            fit = fit,
+                            fit2 = fit2,
+                            PAF = paf_mat)
+  } else {
+    final <- construct_crMM(gamma1 = gamma1_mat,
+                            gamma2 = gamma2_mat,
+                            c = c_mat,
+                            variance = var_mat,
+                            phi = phi,
+                            pi1 = pi1_mat,
+                            fit_sample = fit_mat,
+                            registered_fit = register_mat,
+                            stochastic_time = tt_mat,
+                            fit = fit,
+                            fit2 = fit2)
   }
-
-  if (wantPAF == T) {
-    final$PAF <- paf_mat
-  }
-
   return(final)
 }
 
