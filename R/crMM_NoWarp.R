@@ -16,7 +16,7 @@
 #' @param degree_shape Degree of the piecewise polynomial of B-splines for the common shape functions.
 #' The default is `3` for cubic splines.
 #' @param intercept_shape If `TRUE` an intercept is included in the B-spline basis for the common
-#' shape functions. The default is is `FALSE`.
+#' shape functions. The default is `FALSE`.
 #' @param a_e,a_c,a_l Shape parameters of the Inverse Gamma priors.
 #' @param b_e,b_c,b_l Rate parameters of the Inverse Gamma priors.
 #' @param rescale_pi If `TRUE`, the values of the mixed membership vector pi are rescaled such that

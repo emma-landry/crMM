@@ -15,7 +15,7 @@
 #' @param degree_tt Degree of the piecewise polynomial of B-splines for the time-transformation functions.
 #' The default is `3` for cubic splines.
 #' @param intercept_tt If `TRUE` an intercept is included in the B-spline basis for the time-transformation
-#'functions. The default is is `FALSE`.
+#'functions. The default is `FALSE`.
 #' @param a_e,a_c,a_l,a_phi Shape parameters of the Inverse Gamma priors.
 #' @param b_e,b_c,b_l,b_phi Rate parameters of the Inverse Gamma priors.
 #' @param lambda1_init,lambda2_init,var_c_init,var_e_init,var_phi_init Initial values for prior variances.
