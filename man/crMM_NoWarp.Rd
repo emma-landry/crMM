@@ -50,7 +50,7 @@ The sampler assumes equally spaced knots between the first and last value of \co
 The default is \code{3} for cubic splines.}
 
 \item{intercept_shape}{If \code{TRUE} an intercept is included in the B-spline basis for the common
-shape functions. The default is is \code{FALSE}.}
+shape functions. The default is \code{FALSE}.}
 
 \item{a_e, a_c, a_l}{Shape parameters of the Inverse Gamma priors.}
 
@@ -77,7 +77,7 @@ Default is \code{NULL}, in which case the sampler obtains coefficients based on 
 Default is \code{0.1}, except for \code{var_e_init} which is \code{1}.}
 }
 \value{
-A list with the following items:
+An object of class \code{crMM_Obj}, consisting of a list with the following items:
 \itemize{
 \item \code{gamma1}: a matrix with \code{num_it} rows of the posterior samples for the B-spline coefficient
 for the shape associated with the first feature.

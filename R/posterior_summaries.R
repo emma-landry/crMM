@@ -64,11 +64,11 @@ posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
         gamma1 <- apply(crMM_samples$gamma1, 2, mean)
         gamma2 <- apply(crMM_samples$gamma2, 2, mean)
       } else if (moment == "median") {
-        gamma1 <- apply(crMM_samples$gamma1, 2, median)
-        gamma2 <- apply(crMM_samples$gamma2, 2, median)
+        gamma1 <- apply(crMM_samples$gamma1, 2, stats::median)
+        gamma2 <- apply(crMM_samples$gamma2, 2, stats::median)
       } else if (moment == "sd") {
-        gamma1 <- apply(crMM_samples$gamma1, 2, sd)
-        gamma2 <- apply(crMM_samples$gamma2, 2, sd)
+        gamma1 <- apply(crMM_samples$gamma1, 2, stats::sd)
+        gamma2 <- apply(crMM_samples$gamma2, 2, stats::sd)
       } else {
         warning_count <- warning_count + 1
         warning(paste(moment, " is not a valid value for the moment. The posterior summary is not

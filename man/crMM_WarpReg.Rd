@@ -65,7 +65,7 @@ The sampler assumes equally spaced knots between the first and last value of \co
 The default is \code{3} for cubic splines.}
 
 \item{intercept_shape}{If \code{TRUE} an intercept is included in the B-spline basis for the common
-shape functions. The default is is \code{FALSE}.}
+shape functions. The default is \code{FALSE}.}
 
 \item{inc_rho}{If \code{TRUE}, a parameter that rescales the time transformation functions for the second
 feature towards the identity. Default is \code{TRUE}.}
@@ -79,7 +79,7 @@ The sampler assumes equally spaced knots between the first and last value of \co
 The default is \code{3} for cubic splines.}
 
 \item{intercept_tt}{If \code{TRUE} an intercept is included in the B-spline basis for the time-transformation
-functions. The default is is \code{FALSE}.}
+functions. The default is \code{FALSE}.}
 
 \item{a_e, a_c, a_l, a_phi}{Shape parameters of the Inverse Gamma priors.}
 
