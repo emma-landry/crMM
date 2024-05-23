@@ -137,8 +137,11 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   Upsilon <- identityTT(Boundary.knots = c(0, 1), knots = knots_tt,
                          degree = degree_tt, intercept = intercept_tt)
-  Upsilon[1] <- t[1]
-  Upsilon[Q] <- t[n]
+  #Upsilon[1] <- t[1]
+  #Upsilon[Q] <- t[n]
+
+  Upsilon[1] <- 0
+  Upsilon[Q] <- 1
 
   phi <- matrix(rep(Upsilon, N), nrow = N, byrow = T)
   tau <- rep(0.05, N)

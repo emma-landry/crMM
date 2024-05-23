@@ -28,7 +28,7 @@ The default is \code{3} for cubic splines.}
 shape functions. The default is \code{FALSE}.}
 
 \item{moments}{Vector with the posterior moments of interest. Options that can be included are:
-\code{'mean'}, \code{'median'}, \code{'sd'}, or values between 0 and 1 for quantiles. Default is \code{c('mean')}.}
+\code{"mean"}, \code{"median"}, \code{"sd"}, or values between 0 and 1 for quantiles. The default is \code{c("mean")}.}
 
 \item{eval_points}{Number of points at which to evaluated the function. Default is \code{1000}.}
 }
@@ -43,6 +43,6 @@ A list containing a list for each of the inputted moments, that consists of:
 }
 \description{
 \code{posterior_shape()} obtains posterior summaries for the shape functions. It calculates the desired summary
-statistic/ moments of the posterior MCMM samples for the B-spline coefficients of the two features,
+statistic/ moments of the posterior MCMC samples for the B-spline coefficients of the two features,
 and fits the associated posterior function.
 }

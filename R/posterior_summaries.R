@@ -2,7 +2,7 @@
 #'
 #' @description
 #' `posterior_shape()` obtains posterior summaries for the shape functions. It calculates the desired summary
-#' statistic/ moments of the posterior MCMM samples for the B-spline coefficients of the two features,
+#' statistic/ moments of the posterior MCMC samples for the B-spline coefficients of the two features,
 #' and fits the associated posterior function.
 #'
 #' @param crMM_samples An object of class `crMM_Obj`.
@@ -13,7 +13,7 @@
 #' @param intercept  If `TRUE` an intercept is included in the B-spline basis for the common
 #' shape functions. The default is `FALSE`.
 #' @param moments Vector with the posterior moments of interest. Options that can be included are:
-#' `'mean'`, `'median'`, `'sd'`, or values between 0 and 1 for quantiles. Default is `c('mean')`.
+#' `"mean"`, `"median"`, `"sd"`, or values between 0 and 1 for quantiles. The default is `c("mean")`.
 #' @param eval_points Number of points at which to evaluated the function. Default is `1000`.
 #'
 #' @return A list containing a list for each of the inputted moments, that consists of:
@@ -27,6 +27,7 @@
 #'
 posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
                             moments = c('mean'), eval_points = 1000) {
+
   if (!inherits(crMM_samples, "crMM_Obj")) {
     stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
   }
@@ -159,3 +160,153 @@ r_mise <- function(true, fit) {
   }
   return(rmise)
 }
+
+
+#' Posterior estimates for the time-transformation regression parameter
+#'
+#' @description
+#' `posterior_regression()` obtains the posterior summary statistics for the time-transformation regression
+#' parameter. It calculates the desired summary statistics / moments of the posterior MCMC samples for the
+#' regression parameter. If the sample provided considers the analysis of the EEG case study, the
+#' mean time-transformation functions associated with inputted ages, and stratified by clinical designation,
+#' are also fitted.
+#'
+#'
+#' @param crMM_samples An object of class `crMM_Obj`.
+#' @param moment Posterior moment of interest. Options are: `"mean"`, `"median"`, `"sd"` or values
+#' between 0 and 1 for quantiles. The default is `"mean"`.
+#' @param h The number of inner knots used to define the B-spline for the time-transformation functions.
+#' @param degree Degree of the piecewise cubic polynomial of B-splines for the time-transformation
+#' functions. The default is `3` for cubic splines.
+#' @param intercept If `TRUE`, an intercept is included in the B-spline basis for the time-transformation
+#' functions. The default is `FALSE`.
+#' @param t_boundary A vector with the first and last observation time point. Default is `c(0,1)`.
+#' @param eval_points When `CaseStudy = TRUE`, number of points at which to evaluate the time-transformation
+#' functions using B-spines. Default is `100`.
+#' @param CaseStudy Logical that indicates whether the sample consists of the analysis of the EEG case study.
+#' The default is `FALSE`.
+#' @param ages When `CaseStudy = TRUE`, the age values at which to evaluate the regression mean for the
+#' time-transformation functions. Default is `NULL`, for the general case.
+#'
+#' @return
+#' When `CaseStudy = FALSE`, returns the posterior sample summary for the regression coefficient.
+#'
+#' When `CaseStudy = TRUE`, returns a list containing:
+#'
+#' * The posterior sample summary of the regression coefficient
+#' * A matrix with the regression mean function evaluated at different ages, for TD individuals
+#' * A matrix with the regression mean function evaluated at different ages, for ASD individuals
+#' @export
+#'
+posterior_regression <- function(crMM_samples,  moment = "mean", h, degree = 3, intercept = FALSE,
+                            CaseStudy = FALSE, ages = NULL, t_boundary = c(0, 1), eval_points = 100) {
+
+  if (!inherits(crMM_samples, "crMM_Obj")) {
+    stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
+  }
+
+  if (intercept == FALSE) {
+    df <- h + degree
+  } else {
+    df <- h + degree + 1
+  }
+
+  if (CaseStudy == FALSE) {
+    l <- ncol(crMM_samples$B) / (df - 2)
+
+    if (round(l) != l) {
+      stop("The provided B-spline parameters do not match the dimensions implied by the regression
+           coefficient.")
+    }
+
+    if (typeof(moment) == "character") {
+      if (moment == "mean") {
+        B <- apply(crMM_samples$B, 2, mean)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "median") {
+        B <- apply(crMM_samples$B, 2, stats::median)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "sd") {
+        B <- apply(crMM_samples$B, 2, stats::sd)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    } else {
+      if (moment >= 0 & moment <= 1) {
+        B <- apply(crMM_samples$B, 2, stats::quantile, probs = moment)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    }
+    return(B)
+  } else {
+    l <- 3
+
+    if (ncol(crMM_samples$B) != l * (df - 2)) {
+      stop("The provided B-spline parameters do not match the dimensions implied by the regression
+           coefficient.")
+    }
+
+    if (is.null(ages)) {
+      stop("'ages' needs to be provided for case study analysis.")
+    }
+
+    if (typeof(moment) == "character") {
+      if (moment == "mean") {
+        B <- apply(crMM_samples$B, 2, mean)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "median") {
+        B <- apply(crMM_samples$B, 2, stats::median)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "sd") {
+        B <- apply(crMM_samples$B, 2, stats::sd)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    } else {
+      if (moment >= 0 & moment <= 1) {
+        B <- apply(crMM_samples$B, 2, stats::quantile, probs = moment)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    }
+    n_ages <- length(ages)
+    X0 <- cbind(ages, rep(0, n_ages), rep(0, n_ages))
+    X1 <- cbind(ages, rep(1, n_ages), ages)
+
+    t1 <- min(t_boundary)
+    tn <- max(t_boundary)
+    knots <- seq(t1, tn, length.out = h + 2)[2:(h + 1)]
+
+    phi_mean <- identityTT(Boundary.knots = t_boundary, knots = knots,
+                            degree = degree, intercept = intercept)
+    jupp_mean <- jupp(phi_mean)[-c(1, df)]
+    jupp_mean_mat <- matrix(rep(jupp_mean, n_ages), nrow = n_ages, byrow = T)
+
+    reg_mean0 <- apply(cbind(cbind(rep(0, n_ages), X0 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
+    reg_mean1 <- apply(cbind(cbind(rep(0, n_ages), X0 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
+
+    eval_t <- seq(t1, tn, length.out = eval_points)
+    basis <- splines::bs(x = eval_t, knots = knots, degree = degree, intercept = intercept)
+
+    means0 <- basis %*% reg_mean0
+    means1 <- basis %*% reg_mean1
+
+    return(list(B = B,
+                means0 = means0,
+                means1 = means1))
+  }
+}
+
+
+
+
+

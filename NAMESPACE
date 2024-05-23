@@ -3,5 +3,6 @@
 export(crMM_NoWarp)
 export(crMM_Warp)
 export(crMM_WarpReg)
+export(posterior_regression)
 export(posterior_shape)
 export(r_mise)
