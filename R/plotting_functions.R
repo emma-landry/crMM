@@ -70,10 +70,13 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
                          group = factor(rep(indices, each = n)))
 
   p <- ggplot2::ggplot() +
-       ggplot2::geom_point(data = background_df, ggplot2::aes(x = {{x}}, y = {{y}}), shape = 4, size = 2, color = "grey80") +
-       ggplot2::geom_point(data = index_df, ggplot2::aes(x = {{x}}, y = {{y}}, color = {{group}}), shape = 1, size = 2) +
+       ggplot2::geom_point(data = background_df, ggplot2::aes(x = .data$x, y = .data$y),
+                           shape = 4, size = 2, color = "grey80") +
+       ggplot2::geom_point(data = index_df, ggplot2::aes(x = .data$x, y = .data$y, color = .data$group),
+                           shape = 1, size = 2) +
        ggplot2::geom_line(data = lines_df,
-                          ggplot2::aes(x = {{x}}, y = {{y}}, group = {{group}}, color = {{group}}), size = 0.7) +
+                          ggplot2::aes(x = .data$x, y = .data$y, group = .data$group, color =.data$group),
+                          size = 0.7) +
        ggplot2::scale_color_manual(values = line_colors) +
        ggplot2::labs(x = xlab, y = ylab, title = title ) +
        ggplot2::theme_classic() +
