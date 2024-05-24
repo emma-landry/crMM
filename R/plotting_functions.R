@@ -26,6 +26,12 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
   N <- nrow(y)
   n <- ncol(y)
 
+  num_indices <- length(indices)
+
+  if (length(line_colors) != num_indices) {
+    stop("Provide line colors of the same length as the number of fitted lines to be plotted.")
+  }
+
   if (is.matrix(t)){
     if (nrow(t) == 1 | ncol(t) == 1) {
       t <- as.numeric(t)
@@ -33,37 +39,35 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
         stop("The dimesions of 't' and 'y' don't match.")
       }
       x <- rep(t, times = N)
+      x_ind <- rep(t, times = num_indices)
     } else {
       if (nrow(t) != N | ncol(t) != n) {
         stop("The dimesions of 't' and 'y' don't match.")
       }
       x <- matrix(t, nrow = n * N, byrow = TRUE)
       x <- as.numeric(x)
+      x_ind <- matrix(t[indices, ], nrow = n * num_indices, byrow = TRUE)
+      x_ind <- as.numeric(x_ind)
     }
   } else {
     if (length(t) != n) {
       stop("The dimesions of 't' and 'y' don't match.")
     }
     x <- rep(t, times = N)
+    x_ind <- rep(t, times = num_indices)
   }
-
-  num_indices <- length(indices)
-
-  if (length(line_colors) != num_indices) {
-    stop("Provide line colors of the same length as the number of fitted lines to be plotted.")
-  }
-
-  group <- factor(rep(indices, each = n))
 
   background_df <- data.frame(x = x,
                               y = y,
                               group = "Background")
 
-  index_df <- data.frame(x = x,
+  group <- factor(rep(indices, each = n))
+
+  index_df <- data.frame(x = x_ind,
                          y = as.vector(t(y[indices,])),
                          group = group)
 
-  lines_df <- data.frame(x = x,
+  lines_df <- data.frame(x = x_ind,
                          y = as.vector(t(fit[indices, ])),
                          group = group)
 
