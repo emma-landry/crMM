@@ -46,9 +46,9 @@ When \code{CaseStudy = FALSE}, returns the posterior sample summary for the regr
 
 When \code{CaseStudy = TRUE}, returns a list containing:
 \itemize{
-\item The posterior sample summary of the regression coefficient
-\item A matrix with the regression mean function evaluated at different ages, for TD individuals
-\item A matrix with the regression mean function evaluated at different ages, for ASD individuals
+\item \code{B}: the posterior sample summary of the regression coefficient
+\item \code{means0}: a matrix with the regression mean function evaluated at different ages, for TD individuals
+\item \code{means1}: a matrix with the regression mean function evaluated at different ages, for ASD individuals
 }
 }
 \description{

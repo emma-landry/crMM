@@ -51,7 +51,10 @@
 #' posterior samples of the Peak Alpha Frequency.
 #'
 #' Also, if `inc_rho` is `TRUE`, the list includes a matrix with `num_it` rows of the posterior samples
-#' for the time-transformation rescaling parameter.
+#' for the time-transformation rescaling parameter. Also, `stochastic_time2`, a matrix with `num_it` rows
+#' of the posterior samples of the individual stochastic (aligned) time for the scaled second feature is
+#' provided. The first `length(t)` columns give the times for the first observation, the second
+#' `length(t)` columns give the times for the second observation, and so on for all the data.
 #'
 #' @export
 #'
@@ -172,6 +175,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
   if (inc_rho == T) {
     rho_mat <- matrix(nrow = num_it, ncol = 1, data = NA)
+    tt_mat2 <- matrix(nrow = num_it, ncol = N * n, data = NA)
   }
 
   # Sampling --------------------------------------------------------
@@ -301,6 +305,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
         if (inc_rho == T) {
           current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis1 %*% gamma1 + pi[j, 2] * shape_basis2 %*% gamma2
+          tt_mat2[indexing, ((j - 1) * n + 1): (j * n)] <- tWarp2
         } else {
           current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis1 %*% gamma1 + pi[j, 2] * shape_basis1 %*% gamma2
         }
@@ -330,6 +335,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             fit_sample = fit_mat,
                             registered_fit = register_mat,
                             stochastic_time = tt_mat,
+                            stochastic_time2 = tt_mat2,
                             fit = fit,
                             fit2 = fit2,
                             PAF = paf_mat)
@@ -345,6 +351,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             fit_sample = fit_mat,
                             registered_fit = register_mat,
                             stochastic_time = tt_mat,
+                            stochastic_time2 = tt_mat2,
                             fit = fit,
                             fit2 = fit2)
   } else if (inc_rho == F & wantPAF == T) {

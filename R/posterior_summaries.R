@@ -193,9 +193,10 @@ r_mise <- function(true, fit) {
 #'
 #' When `CaseStudy = TRUE`, returns a list containing:
 #'
-#' * The posterior sample summary of the regression coefficient
-#' * A matrix with the regression mean function evaluated at different ages, for TD individuals
-#' * A matrix with the regression mean function evaluated at different ages, for ASD individuals
+#' * `B`: the posterior sample summary of the regression coefficient
+#' * `means0`: a matrix with the regression mean function evaluated at different ages, for TD individuals
+#' * `means1`: a matrix with the regression mean function evaluated at different ages, for ASD individuals
+#'
 #' @export
 #'
 posterior_regression <- function(crMM_samples,  moment = "mean", h, degree = 3, intercept = FALSE,
@@ -306,7 +307,158 @@ posterior_regression <- function(crMM_samples,  moment = "mean", h, degree = 3, 
   }
 }
 
+#' Posterior estimates for time-transformation functions
+#'
+#' @description
+#' `posterior_tt()` obtains the desired posterior summary statistics for quantities related to the time-
+#' transformation functions. If the sample provided does not including rescaling for the second
+#' feature, the posterior summary is given for the individual time-transformation B-spline coefficients,
+#' the individual time-transformation functions, and the stochastic time points. When rescaling for the second feature,
+#' posterior summaries of the rescaling parameter, as well as the time-transformation functions and stochastic time
+#' points associated with feature 2 are also computed.
+#'
+#' @inheritParams posterior_regression
+#'
+#' @return
+#' When there is no rescaling of the time-transformations in the second feature, returns a list containing:
+#'
+#' * `phi` : a matrix for which each row corresponds to the posterior sample summary for an individual time-transformation
+#' B-spline coefficient
+#' * `tt_functions`: a matrix for which each row corresponds to the posterior sample summary for an individual
+#' time-transformation function
+#' * `stochastic_time`: a matrix for which each row corresponds to the posterior sample summary of the individual
+#' stochastic time points
+#'
+#' If there is rescaling, the list additionally contains:
+#' * `rho`: the posterior sample summary of the time-transformation rescaling parameter
+#' * `tt_functions2` : a matrix for which each row corresponds to the posterior sample summary for an individual
+#' time-transformation function associated with the second feature
+#' * `stochastic_time`: a matrix for which each row corresponds to the posterior sample summary of the individual
+#' stochastic time points associated with the second feature
+#'
+#' @export
+#'
+posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
+                         moment = "mean", t_boundary, eval_points) {
 
+  if (!inherits(crMM_samples, "crMM_Obj")) {
+    stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
+  }
+
+  if (intercept == FALSE) {
+    df <- h + degree
+  } else {
+    df <- h + degree + 1
+  }
+
+  N <- ncol(crMM_samples$c)
+
+  if (typeof(moment) == "character") {
+    if (moment == "mean") {
+      phi <- apply(crMM_samples$phi, 2, mean)
+      phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
+
+      tt <- apply(crMM_samples$stochastic_time, 2, mean)
+      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+
+    } else if (moment == "median") {
+      phi <- apply(crMM_samples$phi, 2, stats::median)
+      phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
+
+      tt <- apply(crMM_samples$stochastic_time, 2, stats::median)
+      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+    } else if (moment == "sd") {
+      phi <- apply(crMM_samples$phi, 2, stats::sd)
+      phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
+
+      tt <- apply(crMM_samples$stochastic_time, 2, stats::sd)
+      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+    } else {
+      stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+    }
+  } else {
+    if (moment >= 0 & moment <= 1) {
+      phi <- apply(crMM_samples$phi, 2, stats::quantile, probs = moment)
+      phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
+
+      tt <- apply(crMM_samples$stochastic_time, 2, stats::quantile, probs = moment)
+      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+    } else {
+      stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+    }
+  }
+
+  t1 <- min(t_boundary)
+  tn <- max(t_boundary)
+
+  knots <- seq(t1, tn, length.out = h + 2)[2:(h + 1)]
+  eval_t <- seq(t1, tn, length.out = eval_points)
+  basis <- splines::bs(x = eval_t, knots = knots, degree = degree, intercept = intercept)
+
+  tt_functions <- basis %*% phi
+
+  if (!is.null(crMM_samples$rho)) {
+
+    scaled_phi <- crMM_samples$rho * crMM_samples$phi
+
+    if (typeof(moment) == "character") {
+      if (moment == "mean") {
+        scaled_phi <- apply(scaled_phi, 2, mean)
+        scaled_phi <- matrix(scaled_phi, nrow = N, ncol = df, byrow = T)
+
+        rho <- apply(crMM_samples$rho, 2, mean)
+
+        tt2 <- apply(crMM_samples$stochastic_time2, 2, mean)
+        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+      } else if (moment == "median") {
+        scaled_phi <- apply(scaled_phi, 2, stats::median)
+        scaled_phi <- matrix(scaled_phi, nrow = N, ncol = df, byrow = T)
+
+        rho <- apply(crMM_samples$rho, 2, stats::median)
+
+        tt2 <- apply(crMM_samples$stochastic_time2, 2, stats::median)
+        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+      } else if (moment == "sd") {
+        scaled_phi <- apply(scaled_phi, 2, stats::sd)
+        scaled_phi <- matrix(scaled_phi, nrow = N, ncol = df, byrow = T)
+
+        rho <- apply(crMM_samples$rho, 2, stats::sd)
+
+        tt2 <- apply(crMM_samples$stochastic_time2, 2, stats::sd)
+        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    } else {
+      if (moment >= 0 & moment <= 1) {
+        scaled_phi <- apply(scaled_phi, 2, stats::quantile, probs = moment)
+        scaled_phi <- matrix(scaled_phi, nrow = N, ncol = df, byrow = T)
+
+        rho <- apply(crMM_samples$rho, 2, stats::quantile, probs = moment)
+
+        tt2 <- apply(crMM_samples$stochastic_time2, 2, stats::quantile, probs = moment)
+        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    }
+    tt_functions2 <- basis %*% scaled_phi - rho * eval_t + t
+    return(list(phi = phi,
+                rho = rho,
+                tt_functions = tt_functions,
+                tt_functions2 = tt_functions2,
+                stochastic_time = tt,
+                stochastic_time2 = tt2))
+  } else {
+    return(list(phi = phi,
+                tt_functions = tt_functions,
+                stochastic_time = tt))
+  }
+}
 
 
 

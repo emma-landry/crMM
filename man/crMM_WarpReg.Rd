@@ -149,7 +149,10 @@ Additionally, if \code{wantPAF} is \code{TRUE} then the list also includes a mat
 posterior samples of the Peak Alpha Frequency.
 
 Also, if \code{inc_rho} is \code{TRUE}, the list includes a matrix with \code{num_it} rows of the posterior samples
-for the time-transformation rescaling parameter.
+for the time-transformation rescaling parameter. Also, \code{stochastic_time2}, a matrix with \code{num_it} rows
+of the posterior samples of the individual stochastic (aligned) time for the scaled second feature is
+provided. The first \code{length(t)} columns give the times for the first observation, the second
+\code{length(t)} columns give the times for the second observation, and so on for all the data.
 }
 \description{
 \code{crMM_WarpReg()} runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two-feature
