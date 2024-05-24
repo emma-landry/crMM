@@ -16,4 +16,5 @@ Imports:
     matrixNormal,
     mvtnorm,
     splines,
-    stats
+    stats,
+    ggplot2
