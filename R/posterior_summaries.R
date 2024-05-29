@@ -70,6 +70,18 @@ posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
       } else if (moment == "sd") {
         gamma1 <- apply(crMM_samples$gamma1, 2, stats::sd)
         gamma2 <- apply(crMM_samples$gamma2, 2, stats::sd)
+      } else if (!is.na(as.numeric(moment))){
+        moment <- as.numeric(moment)
+        if (moment >= 0 & moment <= 1) {
+          gamma1 <- apply(crMM_samples$gamma1, 2, stats::quantile, probs = moment)
+          gamma2 <- apply(crMM_samples$gamma2, 2, stats::quantile, probs = moment)
+          moment <- paste(moment, "quantile")
+        } else {
+          warning_count <- warning_count + 1
+          warning(paste(moment, " is not a valid value for the moment. The posterior summary is not
+                    calculated for it."))
+          next
+        }
       } else {
         warning_count <- warning_count + 1
         warning(paste(moment, " is not a valid value for the moment. The posterior summary is not
@@ -92,7 +104,7 @@ posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
     f1 <- basis %*% gamma1
     f2 <- basis %*% gamma2
 
-    outputs$moment <- list(gamma1 = gamma1,
+    outputs[[moment]] <- list(gamma1 = gamma1,
                            gamma2 = gamma2,
                            f1 = f1,
                            f2 = f2)

@@ -19,6 +19,8 @@
 #'
 #' @export
 #'
+#' @importFrom rlang .data
+#'
 plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
                      xlab = "x", ylab =  "y", title = "",
                      line_colors = c("red", "blue", "green", "purple", "orange")) {
@@ -84,5 +86,72 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
 
   return(p)
 }
+
+
+#' Plot of posterior feature shape
+#'
+#' @description
+#' `plot_feature()` plots the posterior shape function for the desired feature. The posterior quantiles of interest
+#' are also represented.
+#'
+#' @param eval_t Time points for the x axis.
+#' @param shape Posterior central summary of the shape function.
+#' @param quantile_low Posterior lower quantile of the shape function.
+#' @param quantile_high Posterior upper quantile of the shape function.
+#' @param color Line color for the shape function. Default is `"black"`.
+#' @param alpha Opacity of the color for the quantile ribbon. Default is `0.2`.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"f"'`.
+#' @param title Title for the figure. Default is `""`.
+#' @param background_ind Indices of observations to plot. Default is `NULL`, in which case no observations are
+#' displayed with the posterior shape.
+#' @param t Time points at which data is evaluated. Default is `NULL`, for the case when no observations
+#' are displayed with the posterior shape.
+#' @param y Matrix of data. Each row corresponds to one observation. Default is `NULL`, for the case when no observations
+#' are displayed with the posterior shape.
+#'
+#' @return
+#' A ggplot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_feature <- function(eval_t, shape, quantile_low, quantile_high, color = "black", alpha = 0.2,
+                         xlab = "x", ylab =  "f", title = "",
+                         background_ind = NULL, t = NULL, y = NULL) {
+
+  n <- length(t)
+  t1 <- t[1]
+  tn <- t[n]
+
+  plot_df <- data.frame(x = eval_t,
+                        f = shape,
+                        f_low = quantile_low,
+                        f_high = quantile_high)
+
+  p <- ggplot2::ggplot(data = plot_df, ggplot2::aes(x = .data$x, y = .data$f)) +
+       ggplot2::geom_line(color = color) +
+       ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low, ymax = .data$f_high), fill = color, alpha = alpha) +
+       ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 0)),
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(r = 0))) +
+       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  if (!is.null(background_ind)) {
+    for (i in 1:length(background_ind)){
+      line_data <- data.frame(x = t, y = y[background_ind[i], ])
+      p <- p + ggplot2::geom_line(data = line_data,
+                                  ggplot2::aes(x = .data$x, y = .data$y),
+                                  color = "lightgrey",
+                                  linetype = "dashed")
+    }
+  }
+
+  return(p)
+}
+
 
 
