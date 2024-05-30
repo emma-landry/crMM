@@ -5,7 +5,7 @@
 \title{Plot of posterior feature shape}
 \usage{
 plot_feature(
-  t,
+  eval_t,
   shape,
   quantile_low,
   quantile_high,
@@ -15,11 +15,12 @@ plot_feature(
   ylab = "f",
   title = "",
   background_ind = NULL,
+  t = NULL,
   y = NULL
 )
 }
 \arguments{
-\item{t}{Time points for the x axis.}
+\item{eval_t}{Time points for the horizontal axis.}
 
 \item{shape}{Posterior central summary of the shape function.}
 
@@ -39,6 +40,9 @@ plot_feature(
 
 \item{background_ind}{Indices of observations to plot. Default is \code{NULL}, in which case no observations are
 displayed with the posterior shape.}
+
+\item{t}{Time points at which data is evaluated. Default is \code{NULL}, for the case when no observations
+are displayed with the posterior shape.}
 
 \item{y}{Matrix of data. Each row corresponds to one observation. Default is \code{NULL}, for the case when no observations
 are displayed with the posterior shape.}

@@ -279,7 +279,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
       c_mat[indexing, ]      <- c
       pi1_mat[indexing, ]    <- pi[, 1]
       var_mat[indexing, ]    <- c(lambda1, lambda2, var_c, var_e, var_phi)
-      phi_mat[indexing, ]    <- matrix(phi, ncol = N * Q)
+      phi_mat[indexing, ]    <- matrix(t(phi), ncol = N * Q, byrow = T)
       B_mat[indexing, ]      <- matrix(B, nrow = l * (Q - 2))
 
       if (inc_rho == T) {
@@ -328,7 +328,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             gamma2 = gamma2_mat,
                             c = c_mat,
                             variance = var_mat,
-                            phi = phi,
+                            phi = phi_mat,
                             rho = rho_mat,
                             pi1 = pi1_mat,
                             B = B_mat,

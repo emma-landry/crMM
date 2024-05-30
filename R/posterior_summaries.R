@@ -305,7 +305,7 @@ posterior_regression <- function(crMM_samples,  moment = "mean", h, degree = 3, 
     jupp_mean_mat <- matrix(rep(jupp_mean, n_ages), nrow = n_ages, byrow = T)
 
     reg_mean0 <- apply(cbind(cbind(rep(0, n_ages), X0 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
-    reg_mean1 <- apply(cbind(cbind(rep(0, n_ages), X0 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
+    reg_mean1 <- apply(cbind(cbind(rep(0, n_ages), X1 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
 
     eval_t <- seq(t1, tn, length.out = eval_points)
     basis <- splines::bs(x = eval_t, knots = knots, degree = degree, intercept = intercept)
@@ -364,6 +364,7 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
   }
 
   N <- ncol(crMM_samples$c)
+  n <- ncol(crMM_samples$stochastic_time) / N
 
   if (typeof(moment) == "character") {
     if (moment == "mean") {
@@ -371,20 +372,20 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
       phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
 
       tt <- apply(crMM_samples$stochastic_time, 2, mean)
-      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+      tt <- matrix(tt, nrow = N, ncol = n, byrow = T)
 
     } else if (moment == "median") {
       phi <- apply(crMM_samples$phi, 2, stats::median)
       phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
 
       tt <- apply(crMM_samples$stochastic_time, 2, stats::median)
-      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+      tt <- matrix(tt, nrow = N, ncol = n, byrow = T)
     } else if (moment == "sd") {
       phi <- apply(crMM_samples$phi, 2, stats::sd)
       phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
 
       tt <- apply(crMM_samples$stochastic_time, 2, stats::sd)
-      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+      tt <- matrix(tt, nrow = N, ncol = n, byrow = T)
     } else {
       stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
                     calculated for it."))
@@ -395,7 +396,7 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
       phi <- matrix(phi, nrow = N, ncol = df, byrow = T)
 
       tt <- apply(crMM_samples$stochastic_time, 2, stats::quantile, probs = moment)
-      tt <- matrix(tt, nrow = N, ncol = df, byrow = T)
+      tt <- matrix(tt, nrow = N, ncol = n, byrow = T)
     } else {
       stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
                     calculated for it."))
@@ -409,11 +410,11 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
   eval_t <- seq(t1, tn, length.out = eval_points)
   basis <- splines::bs(x = eval_t, knots = knots, degree = degree, intercept = intercept)
 
-  tt_functions <- basis %*% phi
+  tt_functions <- basis %*% t(phi)
 
   if (!is.null(crMM_samples$rho)) {
 
-    scaled_phi <- crMM_samples$rho * crMM_samples$phi
+    scaled_phi <- sweep(crMM_samples$phi, 1, crMM_samples$rho, FUN = "*")
 
     if (typeof(moment) == "character") {
       if (moment == "mean") {
@@ -423,7 +424,7 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
         rho <- apply(crMM_samples$rho, 2, mean)
 
         tt2 <- apply(crMM_samples$stochastic_time2, 2, mean)
-        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+        tt2 <- matrix(tt2, nrow = N, ncol = n, byrow = T)
       } else if (moment == "median") {
         scaled_phi <- apply(scaled_phi, 2, stats::median)
         scaled_phi <- matrix(scaled_phi, nrow = N, ncol = df, byrow = T)
@@ -431,7 +432,7 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
         rho <- apply(crMM_samples$rho, 2, stats::median)
 
         tt2 <- apply(crMM_samples$stochastic_time2, 2, stats::median)
-        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+        tt2 <- matrix(tt2, nrow = N, ncol = n, byrow = T)
       } else if (moment == "sd") {
         scaled_phi <- apply(scaled_phi, 2, stats::sd)
         scaled_phi <- matrix(scaled_phi, nrow = N, ncol = df, byrow = T)
@@ -439,7 +440,7 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
         rho <- apply(crMM_samples$rho, 2, stats::sd)
 
         tt2 <- apply(crMM_samples$stochastic_time2, 2, stats::sd)
-        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+        tt2 <- matrix(tt2, nrow = N, ncol = n, byrow = T)
       } else {
         stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
                     calculated for it."))
@@ -452,13 +453,13 @@ posterior_tt <- function(crMM_samples, h, degree = 3, intercept = FALSE,
         rho <- apply(crMM_samples$rho, 2, stats::quantile, probs = moment)
 
         tt2 <- apply(crMM_samples$stochastic_time2, 2, stats::quantile, probs = moment)
-        tt2 <- matrix(tt2, nrow = N, ncol = df, byrow = T)
+        tt2 <- matrix(tt2, nrow = N, ncol = n, byrow = T)
       } else {
         stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
                     calculated for it."))
       }
     }
-    tt_functions2 <- basis %*% scaled_phi - rho * eval_t + t
+    tt_functions2 <- basis %*% t(scaled_phi) - rho * eval_t + eval_t
     return(list(phi = phi,
                 rho = rho,
                 tt_functions = tt_functions,
