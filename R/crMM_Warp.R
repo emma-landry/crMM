@@ -277,7 +277,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       c_mat[indexing, ]     <- c
       pi1_mat[indexing, ]   <- pi[, 1]
       var_mat[indexing, ]   <- c(lambda1, lambda2, var_c, var_e, var_phi)
-      phi_mat[indexing, ]   <- matrix(t(phi), ncol = N * Q, , byrow = T)
+      phi_mat[indexing, ]   <- matrix(t(phi), ncol = N * Q, byrow = T)
 
       if (inc_rho == T) {
         rho_mat[indexing, ] <- rho
