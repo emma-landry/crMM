@@ -308,4 +308,72 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
   return(p)
 }
 
+#' Plot of the data
+#'
+#' @description
+#' `plot_data()` plots the rows of the matrix of observations.
+#'
+#' @param t  Time points for the x axis. Either a vector that is common for all observations, or a matrix for which
+#' each row corresponds to an observation.
+#' @param y Matrix of data. Each row corresponds to one observation.
+#' @param indices Vector indicating which observations to plot. Default is `1:nrow(y)`, indicating that all obersvations
+#' should be plotted.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"y"`.
+#' @param title Title for the figure. Default is `""`.
+#'
+#' @return
+#' A gglpot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "") {
+  n <- ncol(y)
+  N <- nrow(y)
+  t1 <- min(t)
+  tn <- max(t)
+
+  if (is.matrix(t)){
+    if (nrow(t) == 1 | ncol(t) == 1) {
+      t <- as.numeric(t)
+      if (length(t) != n) {
+        stop("The dimensions of 't' and 'y' don't match.")
+      }
+      data <- data.frame(x = rep(t, each = N), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
+    } else {
+      if (nrow(t) != N | ncol(t) != n) {
+        stop("The dimensions of 't' and 'y' don't match.")
+      }
+      data <- data.frame(x = c(t), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
+    }
+  } else {
+    if (length(t) != n) {
+      stop("The dimensions of 't' and 'y' don't match.")
+    }
+    data <- data.frame(x = rep(t, each = N), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
+  }
+  p <- ggplot2::ggplot(data = data,
+                       ggplot2::aes(x = .data$x, y = .data$y, group = .data$Row_Index, color = .data$Row_Index)) +
+       ggplot2::geom_line() +
+       ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::scale_color_viridis_d(option = "A", direction = 1) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                      legend.position = "none",
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank()) +
+       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  return(p)
+}
+
+
 

@@ -3,6 +3,7 @@
 export(crMM_NoWarp)
 export(crMM_Warp)
 export(crMM_WarpReg)
+export(plot_data)
 export(plot_feature)
 export(plot_fit)
 export(plot_tt)
