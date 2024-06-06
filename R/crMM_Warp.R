@@ -172,6 +172,10 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   if (wantPAF == T) {
     paf_mat <- matrix(nrow = num_it, ncol = 1, data = NA)
+    eval_grid <- seq(t1, tn, length = 5000)
+    eval_knots <- seq(t1, tn, length = p + 2)[-c(1, p + 2)]
+    spline_eval_max <- splines::bs(x = eval_grid, knots = eval_knots,
+                                   degree = degree_shape, intercept = intercept_shape)
   }
 
   if (inc_rho == T) {
@@ -262,9 +266,6 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
     var_phi <- var_phiUpdate_NoReg(phi = phi, Upsilon = Upsilon, a_phi = a_phi, b_phi = b_phi)
 
     if (wantPAF == T) {
-      eval_grid <- seq(t1, tn, length = 5000)
-      spline_eval_max <- splines::bs(x = eval_grid, knots = knots_shape,
-                                     degree = degree_shape, intercept = intercept_shape)
       shape1_eval <- gamma1 %*% t(spline_eval_max)
       peak_location <- eval_grid[(order(shape1_eval, decreasing = T)[1])]
     }
@@ -277,7 +278,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       c_mat[indexing, ]     <- c
       pi1_mat[indexing, ]   <- pi[, 1]
       var_mat[indexing, ]   <- c(lambda1, lambda2, var_c, var_e, var_phi)
-      phi_mat[indexing, ]   <- matrix(t(phi), ncol = N * Q, , byrow = T)
+      phi_mat[indexing, ]   <- matrix(t(phi), ncol = N * Q, byrow = T)
 
       if (inc_rho == T) {
         rho_mat[indexing, ] <- rho

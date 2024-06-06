@@ -307,4 +307,185 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
   return(p)
 }
 
+#' Plot of the data
+#'
+#' @description
+#' `plot_data()` plots the rows of the matrix of observations.
+#'
+#' @param t  Time points for the x axis. Either a vector that is common for all observations, or a matrix for which
+#' each row corresponds to an observation.
+#' @param y Matrix of data. Each row corresponds to one observation.
+#' @param indices Vector indicating which observations to plot. Default is `1:nrow(y)`, indicating that all obersvations
+#' should be plotted.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"y"`.
+#' @param title Title for the figure. Default is `""`.
+#'
+#' @return
+#' A gglpot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "") {
+  n <- ncol(y)
+  N <- nrow(y)
+  t1 <- min(t)
+  tn <- max(t)
+
+  if (is.matrix(t)){
+    if (nrow(t) == 1 | ncol(t) == 1) {
+      t <- as.numeric(t)
+      if (length(t) != n) {
+        stop("The dimensions of 't' and 'y' don't match.")
+      }
+      data <- data.frame(x = rep(t, each = N), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
+    } else {
+      if (nrow(t) != N | ncol(t) != n) {
+        stop("The dimensions of 't' and 'y' don't match.")
+      }
+      data <- data.frame(x = c(t), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
+    }
+  } else {
+    if (length(t) != n) {
+      stop("The dimensions of 't' and 'y' don't match.")
+    }
+    data <- data.frame(x = rep(t, each = N), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
+  }
+  p <- ggplot2::ggplot(data = data,
+                       ggplot2::aes(x = .data$x, y = .data$y, group = .data$Row_Index, color = .data$Row_Index)) +
+       ggplot2::geom_line() +
+       ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::scale_color_viridis_d(option = "A", direction = 1) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                      legend.position = "none",
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank()) +
+       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  return(p)
+}
+
+#' Plot a histogram and density estimate for a sample
+#'
+#' @description
+#' `plot_posterior_hist()` returns the histogram and density estimate for a sample. In particular,
+#' it allows to illustrate the posterior distribution of parameters or quantities of interest.
+#'
+#' @param sample Sample of values for which the distribution is of interest.
+#' @param colors Vector of two colors. The first one is for the fill color of the histogram bins, the
+#' second one is the line color for the density. Default is `c("gold", "darkblue")`.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"Density"`.
+#' @param title Title for the figure. Default is `""`.
+#' @param binwidth Width of histogram bins. Default is `0.03`.
+#'
+#' @return
+#' A ggplot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_posterior_hist <- function(sample, colors = c("gold", "darkblue"), xlab = "x", ylab = "Density",
+                                title = "", binwidth = 0.03) {
+  data <- data.frame("sample" = sample)
+
+  temp_hist <- ggplot2::ggplot(data, ggplot2::aes(x = .data$sample)) +
+               ggplot2::geom_histogram(binwidth = binwidth,
+                                       ggplot2::aes(y = ggplot2::after_stat(.data$density)))
+
+  hist_data <- ggplot2::ggplot_build(temp_hist)$data[[1]]
+  max_density <- max(hist_data$density)
+
+  p <- ggplot2::ggplot(data, ggplot2::aes(x = .data$sample)) +
+       ggplot2::geom_histogram(binwidth = binwidth,
+                               ggplot2::aes(y = ggplot2::after_stat(.data$density)),
+                               color = "black",
+                               fill = colors[1]) +
+       ggplot2::geom_density(lwd = 2, color = colors[2]) +
+       ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                      legend.position = "none",
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank()) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(min(data), max(data))) +
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, max_density + 0.2))
+
+  return(p)
+}
+
+#' Plot a boxplot of individual mixed membership components
+#'
+#' @description
+#' `plot_member_boxplot()` plots a boxplot for the membership to the provided feature, separated
+#' by group. In the case study, the group corresponds to the clinical designation.
+#'
+#' @param pi Values of the mixed membership componenet for each individual.
+#' @param group Vector of 0 and 1s indicating group belonging for each individual.
+#' @param colors Vector of two colors, where each corresponds to the color of the boxplot for one group.
+#' Default is `c("cornflowerblue", "gold")`.
+#' @param group_labels Labels to use to denote each group. Default is `c("0", "1")`.
+#' @param xlab Label for the horizontal axis. Default is `"Designation"`.
+#' @param ylab Label for the vertical axis. Default is `"Value"`.
+#' @param title Title for the figure. Default is `""`.
+#'
+#' @return
+#' A ggplot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+plot_member_boxplot <- function(pi, group, colors = c("cornflowerblue", "gold1"),
+                            group_labels = c("0", "1"), xlab = "Designation",
+                            ylab = "Value", title = "") {
+  data_pi <- data.frame("pi" = pi,
+                        "group" = group)
+  data_0 <- data_pi[data_pi$group == group[1], ]
+  data_1 <- data_pi[data_pi$group == group[2], ]
+
+  p <- ggplot2::ggplot() +
+       ggplot2::boxplot(data = data_0,
+                       mapping = ggplot2::aes(x = group_labels[1], y = .data$pi),
+                       fill = ggplot2::alpha(colors[1], 0.5)) +
+       ggplot2::boxplot(data = data_1,
+                        mapping = ggplot2::aes(x = group_labels[2], y = .data$pi),
+                        fill = ggplot2::alpha(colors[2], 0.5)) +
+       ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                      legend.position = "none",
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank()) +
+       ggplot2::geom_jitter(data = data_0, ggplot2::aes(x = group_labels[1], y = .data$pi),
+                            color = "black", width = 0.1) +
+       ggplot2::geom_jitter(data = data_1, ggplot2::aes(x = group_labels[2], y = .data$pi),
+                            color = "black", width = 0.1) +
+       ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, 1.15))
+
+  return(p)
+
+}
+
 

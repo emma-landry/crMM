@@ -171,6 +171,10 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
   if (wantPAF == T) {
     paf_mat <- matrix(nrow = num_it, ncol = 1, data = NA)
+    eval_grid <- seq(t1, tn, length = 5000)
+    eval_knots <- seq(t1, tn, length = p + 2)[-c(1, p + 2)]
+    spline_eval_max <- splines::bs(x = eval_grid, knots = eval_knots,
+                                   degree = degree_shape, intercept = intercept_shape)
   }
 
   if (inc_rho == T) {
@@ -264,11 +268,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                                  X = X, B = B, B0 = B0, V0 = V0)
 
     if (wantPAF == T) {
-      eval_grid <- seq(t1, tn, length = 5000)
-      spline_eval_max <- splines::bs(x = eval_grid, knots = knots_shape,
-                                     degree = degree_shape, intercept = intercept_shape)
-      shape2_eval <- gamma2 %*% t(spline_eval_max)
-      peak_location <- eval_grid[(order(shape2_eval, decreasing = T)[1])]
+      shape1_eval <- gamma1 %*% t(spline_eval_max)
+      peak_location <- eval_grid[(order(shape1_eval, decreasing = T)[1])]
     }
 
     # Storing the samples

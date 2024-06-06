@@ -138,6 +138,10 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
 
   if (wantPAF == T) {
     paf_mat <- matrix(nrow = num_it, ncol = 1, data = NA)
+    eval_grid <- seq(t1, tn, length = 5000)
+    eval_knots <- seq(t1, tn, length = p + 2)[-c(1, p + 2)]
+    spline_eval_max <- splines::bs(x = eval_grid, knots = eval_knots,
+                                   degree = degree_shape, intercept = intercept_shape)
   }
 
   # Sampling --------------------------------------------------------
@@ -164,9 +168,6 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
                                 shape_basis = shape_basis, a_e = a_e, b_e = b_e)
 
     if (wantPAF == T) {
-      eval_grid <- seq(t1, tn, length = 5000)
-      spline_eval_max <- splines::bs(x = eval_grid, knots = knots_shape,
-                                     degree = degree_shape, intercept = intercept_shape)
       shape1_eval <- gamma1 %*% t(spline_eval_max)
       peak_location <- eval_grid[(order(shape1_eval, decreasing = T)[1])]
     }
