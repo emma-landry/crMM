@@ -544,7 +544,7 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
   color_mapping <- stats::setNames(colors, list_names)
 
   p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$x, y = .data$f)) +
-       ggplot2::geom_line(ggplot2::aes(color = .data$warping))
+       ggplot2::geom_line(ggplot2::aes(color = .data$warping)) +
        ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low,
                                          ymax = .data$f_high,
                                          fill = .data$warping),
