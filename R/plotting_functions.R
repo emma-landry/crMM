@@ -532,12 +532,14 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
 
   for (i in 1:m) {
     df <- data.frame(x = eval_t,
-                     f = shape[i],
-                     f_low = quantile_low[i],
-                     f_high = quantile_high[i])
+                     f = shape[[i]],
+                     f_low = quantile_low[[i]],
+                     f_high = quantile_high[[i]])
     df$warping <- list_names[i]
     plot_dfs[[paste0("df", i)]] <- df
+
   }
+
 
   plot_df <- do.call(rbind, plot_dfs)
   color_mapping <- stats::setNames(colors, list_names)
@@ -566,6 +568,16 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
                       panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
                       panel.background = ggplot2::element_blank()) +
        ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  if (!is.null(background_ind)) {
+    for (i in 1:length(background_ind)){
+      line_data <- data.frame(x = t, y = y[background_ind[i], ])
+      p <- p + ggplot2::geom_line(data = line_data,
+                                  ggplot2::aes(x = .data$x, y = .data$y),
+                                  color = "lightgrey",
+                                  linetype = "dashed")
+    }
+  }
 
   return(p)
 }
