@@ -46,8 +46,7 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
       if (nrow(t) != N | ncol(t) != n) {
         stop("The dimesions of 't' and 'y' don't match.")
       }
-      x <- matrix(t, nrow = n * N, byrow = TRUE)
-      x <- as.numeric(x)
+      x <- c(t(t))
       x_ind <- matrix(t[indices, ], nrow = n * num_indices, byrow = TRUE)
       x_ind <- as.numeric(x_ind)
     }
