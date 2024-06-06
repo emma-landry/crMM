@@ -457,14 +457,14 @@ plot_member_boxplot <- function(pi, group, colors = c("cornflowerblue", "gold1")
                             ylab = "Value", title = "") {
   data_pi <- data.frame("pi" = pi,
                         "group" = group)
-  data_0 <- data_pi[data_pi$group == group[1], ]
-  data_1 <- data_pi[data_pi$group == group[2], ]
+  data_0 <- data_pi[data_pi$group == 0, ]
+  data_1 <- data_pi[data_pi$group == 1, ]
 
   p <- ggplot2::ggplot() +
-       ggplot2::boxplot(data = data_0,
+       ggplot2::geom_boxplot(data = data_0,
                        mapping = ggplot2::aes(x = group_labels[1], y = .data$pi),
                        fill = ggplot2::alpha(colors[1], 0.5)) +
-       ggplot2::boxplot(data = data_1,
+       ggplot2::geom_boxplot(data = data_1,
                         mapping = ggplot2::aes(x = group_labels[2], y = .data$pi),
                         fill = ggplot2::alpha(colors[2], 0.5)) +
        ggplot2::labs(x = xlab, y = ylab, title = title) +
@@ -482,11 +482,93 @@ plot_member_boxplot <- function(pi, group, colors = c("cornflowerblue", "gold1")
        ggplot2::geom_jitter(data = data_0, ggplot2::aes(x = group_labels[1], y = .data$pi),
                             color = "black", width = 0.1) +
        ggplot2::geom_jitter(data = data_1, ggplot2::aes(x = group_labels[2], y = .data$pi),
-                            color = "black", width = 0.1) +
-       ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, 1.15))
+                            color = "black", width = 0.1)
 
   return(p)
 
+}
+
+#' Plot of multiple posterior feature shapes
+#'
+#' @description
+#' `plot_multiple_feature()` plots the posterior shape function for the desired feature obtained through
+#' different methods or simulations. The posterior quantiles of interest are also represented.
+#'
+#' @param eval_t Time points for the horizontal axis.
+#' @param shape List whose elements are the posterior central summary of the shape function.
+#' @param quantile_low List whose elements are the posterior lower quantile of the shape function.
+#' @param quantile_high List whose elements are the posterior upper quantile of the shape function.
+#' @param colors Vector of colors for the line and ribbon for each different shape.
+#' @param alpha Opacity of the color for the quantile ribbon. Default is `0.2`.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"f"`.
+#' @param title Title for the figure. Default is `""`.
+#' @param background_ind Indices of observations to plot. Default is `NULL`, in which case no observations
+#' are displayed with the posterior shape.
+#' @param t Time points at which data is evaluated. Default is `NULL`, for the case when no observations
+#' are displayed with the posterior shape.
+#' @param y Matrix of data. Each row corresponds to one observation. Default is `NULL`, for the case when
+#' no observations are displayed with the posterior shape.
+#' @param legend_position Vector of coordinates for the location of the legend. Default is `c(0.8, 0.8)`.
+#'
+#' @return
+#' A ggplot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, colors,
+                                  alpha = 0.2, xlab = "x", ylab = "f", title = "",
+                                  background_ind = NULL, t = NULL, y = NULL,
+                                  legend_position = c(0.8, 0.8)) {
+  n <- length(eval_t)
+  t1 <- eval_t[1]
+  tn <- eval_t[n]
+
+  list_names <- names(shape)
+  m <- length(list_names)
+
+  plot_dfs <- list()
+
+  for (i in 1:m) {
+    df <- data.frame(x = eval_t,
+                     f = shape[i],
+                     f_low = quantile_low[i],
+                     f_high = quantile_high[i])
+    df$warping <- list_names[i]
+    plot_dfs[[paste0("df", i)]] <- df
+  }
+
+  plot_df <- do.call(rbind, plot_dfs)
+  color_mapping <- stats::setNames(colors, list_names)
+
+  p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$x, y = .data$f)) +
+       ggplot2::geom_line(ggplot2::aes(color = .data$warping))
+       ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low,
+                                         ymax = .data$f_high,
+                                         fill = .data$warping),
+                            alpha = 0.2) +
+       ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::scale_color_manual(values = color_mapping) +
+       ggplot2::scale_fill_manual(values = color_mapping) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
+                      legend.position = legend_position,
+                      legend.title = ggplot2::element_blank(),
+                      legend.spacing.x = grid::unit(0, "cm"),
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      axis.ticks.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank()) +
+       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  return(p)
 }
 
 
