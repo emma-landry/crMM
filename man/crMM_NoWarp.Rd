@@ -35,9 +35,10 @@ crMM_NoWarp(
 \arguments{
 \item{num_it}{The number of MCMC iterations (after burn-in).}
 
-\item{burnin}{The proportion of the iterations eliminated for burn-in. The default is \code{0.2}.
+\item{burnin}{If a number between 0 and 1, the proportion of the iterations eliminated for burn-in.
 The first \code{burnin * num_it} iterations are discarded, and the sampler then runs for another \code{num_it}
-iterations from which samples are recorded.}
+iterations from which samples are recorded. If an integer, the number of iterations to discard, before
+running for another \code{num_it} iterations from which samples are recorded. The default is \code{0.2}.}
 
 \item{t}{The time points at which the data is observed.}
 

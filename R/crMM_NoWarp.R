@@ -6,9 +6,10 @@
 #' [crMM_Warp()] and [crMM_WarpReg()] for samplers that include estimation of time-transformation functions.
 #'
 #' @param num_it The number of MCMC iterations (after burn-in).
-#' @param burnin The proportion of the iterations eliminated for burn-in. The default is `0.2`.
+#' @param burnin If a number between 0 and 1, the proportion of the iterations eliminated for burn-in.
 #' The first `burnin * num_it` iterations are discarded, and the sampler then runs for another `num_it`
-#' iterations from which samples are recorded.
+#' iterations from which samples are recorded. If an integer, the number of iterations to discard, before
+#' running for another `num_it` iterations from which samples are recorded. The default is `0.2`.
 #' @param t The time points at which the data is observed.
 #' @param y A matrix containing the functional observations. Each row corresponds to one observation.
 #' @param p The number of inner knots used to define the B-splines for the common shape functions.
@@ -120,12 +121,18 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
     pi[label2, 1] <- 0
     pi[label2, 2] <- 1
   }
-  pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
-  pi[, 2] <- 1 - pi[, 1]
+  #pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
+  #pi[, 2] <- 1 - pi[, 1]
+
+  if (0 <= burnin & burnin <= 1 ){
+    burn_it <- round(num_it * burnin)
+  } else {
+    burn_it <- burnin
+  }
+
+  total_it     <- burn_it + num_it
 
   # Storage matrices ------------------------------------------------
-  burn_it     <- round(num_it * burnin)
-  total_it    <- burn_it + num_it
   gamma1_mat  <- matrix(nrow = num_it, ncol = p + 4, data = NA)
   gamma2_mat  <- matrix(nrow = num_it, ncol = p + 4, data = NA)
   c_mat       <- matrix(nrow = num_it, ncol = N, data = NA)

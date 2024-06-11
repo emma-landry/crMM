@@ -130,8 +130,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
     pi[label2, 1] <- 0
     pi[label2, 2] <- 1
   }
-  pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
-  pi[, 2] <- 1 - pi[, 1]
+  #pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
+  #pi[, 2] <- 1 - pi[, 1]
 
   Upsilon <- identityTT(Boundary.knots = c(0, 1), knots = knots_tt,
                         degree = degree_tt, intercept = intercept_tt)
@@ -150,10 +150,15 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
   B <- B_init
 
+  if (0 <= burnin & burnin <= 1 ){
+    burn_it <- round(num_it * burnin)
+  } else {
+    burn_it <- burnin
+  }
+
+  total_it     <- burn_it + num_it
 
   # Storage matrices ------------------------------------------------
-  burn_it      <- round(num_it * burnin)
-  total_it     <- burn_it + num_it
   gamma1_mat   <- matrix(nrow = num_it, ncol = p + 4, data = NA)
   gamma2_mat   <- matrix(nrow = num_it, ncol = p + 4, data = NA)
   c_mat        <- matrix(nrow = num_it, ncol = N, data = NA)

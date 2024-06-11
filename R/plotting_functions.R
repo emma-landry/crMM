@@ -583,4 +583,70 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
   return(p)
 }
 
+#' Plot shape functions from different samples
+#'
+#' @description
+#' `plot_identifiability()` plots the posterior shape function for the desired feature obtained through
+#' different methods or simulations. It focuses on the identifiability, for plots with confidence bands
+#' and legends see `plot_multiple_feature()`.
+#'
+#' @param eval_t Time points for the horizontal axis.
+#' @param shape List whose elements are the values of the shape function for different simulations.
+#' @param colors Vectors of colors for the line of each shape. Default is
+#' `("red", "blue", "green", "orange", "purple")`, assuming 5 lines are plotted.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"f"`.
+#' @param title Title for the figure. Default is `""`.
+#'
+#' @return
+#' A ggplot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_identifiability <- function(eval_t, shape,
+                                 colors = c("red", "blue", "green", "orange", "purple"),
+                                 xlab = "x", ylab = "f", title = "") {
+  n <- length(eval_t)
+  t1 <- eval_t[1]
+  tn <- eval_t[n]
+
+  list_names <- names(shape)
+  m <- length(list_names)
+
+  if (length(colors) != m) {
+    stop("Please provide as many colors as there are samples to represent.")
+  }
+
+  plot_df <- data.frame(x = eval_t)
+
+  for (i in 1:m) {
+    plot_df[[paste0("sample", i)]] <- shape[[i]]
+  }
+
+  p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$x))
+
+  for (i in 1:m) {
+    col_name <- paste0("sample", i)
+    p <- p + ggplot2::geom_line(ggplot2::aes(y = !!rlang::sym(col_name)), color = colors[i])
+  }
+
+  p <- p + ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   axis.ticks.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank()) +
+       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  return(p)
+
+}
 
