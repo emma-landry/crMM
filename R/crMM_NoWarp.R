@@ -33,6 +33,7 @@
 #' Default is `NULL`, in which case the sampler obtains coefficients based on the extreme observations.
 #' @param lambda1_init,lambda2_init,var_c_init,var_e_init Initial values for prior variances.
 #' Default is `0.1`, except for `var_e_init` which is `1`.
+#' @param process_id If provided, gives an ID to the iteration for parallel processing. Default is `NULL`.
 #'
 #' @returns An object of class `crMM_Obj`, consisting of a list with the following items:
 #'
@@ -63,7 +64,8 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
                         a_e, b_e, a_c, b_c, a_l, b_l, rescale_pi = TRUE,
                         tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = FALSE,
                         gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
-                        lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1) {
+                        lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1,
+                        process_id = NULL) {
 
   # Lengths ---------------------------------------------------------
   n <- length(t)
@@ -153,6 +155,10 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
 
   # Sampling --------------------------------------------------------
   for (i in 1:total_it) {
+    if (i %% 1000 == 0 & !is.null(process_id)) {
+      cat(paste(Sys.time(), "- Process", process_id, "- Completed", i, "iterations\n"))
+      flush.console()
+    }
     c <- cUpdate_NoWarp(t = t, y = y, gamma1 = gamma1, gamma2 = gamma2, pi = pi,
                         shape_basis = shape_basis, var_c = var_c, var_e = var_e)
 

@@ -63,7 +63,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = TRUE, B0, V0, B_init = B0,
                       tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = FALSE,
                       gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
-                      lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1) {
+                      lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1,
+                      process_id = NULL) {
 
   # Lengths ---------------------------------------------------------
   n <- length(t)
@@ -190,6 +191,11 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
   # Sampling --------------------------------------------------------
   for (i in 1:total_it) {
     if (i %% 100 == 0) print(i)
+
+    if (i %% 1000 == 0 & !is.null(process_id)) {
+      cat(paste(Sys.time(), "- Process", process_id, "- Completed", i, "iterations\n"))
+      flush.console()
+    }
 
     if (inc_rho == T) {
       c <- cUpdate_Warp(t = t, y = y, phi = phi, rho = rho, tt_basis = tt_basis,

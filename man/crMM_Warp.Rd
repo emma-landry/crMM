@@ -37,7 +37,8 @@ crMM_Warp(
   lambda2_init = 0.1,
   var_c_init = 0.1,
   var_e_init = 1,
-  var_phi_init = 1
+  var_phi_init = 1,
+  process_id = NULL
 )
 }
 \arguments{
@@ -98,6 +99,8 @@ Default is \code{NULL}, in which case the sampler obtains coefficients based on 
 
 \item{lambda1_init, lambda2_init, var_c_init, var_e_init, var_phi_init}{Initial values for prior variances.
 Default is \code{0.1}, except for \code{var_e_init} and \code{var_phi_init} which is \code{1}.}
+
+\item{process_id}{If provided, gives an ID to the iteration for parallel processing. Default is \code{NULL}.}
 }
 \value{
 A list with the following items:
