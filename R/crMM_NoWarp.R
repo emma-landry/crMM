@@ -155,9 +155,8 @@ crMM_NoWarp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, interce
 
   # Sampling --------------------------------------------------------
   for (i in 1:total_it) {
-    if (i %% 1000 == 0 & !is.null(process_id)) {
-      cat(paste(Sys.time(), "- Process", process_id, "- Completed", i, "iterations\n"))
-      flush.console()
+    if (i %% 2000 == 0 & !is.null(process_id)) {
+      system(sprintf('echo "\n%s - Process %s - Completed %d iterations\n"', Sys.time(), process_id, i))
     }
     c <- cUpdate_NoWarp(t = t, y = y, gamma1 = gamma1, gamma2 = gamma2, pi = pi,
                         shape_basis = shape_basis, var_c = var_c, var_e = var_e)

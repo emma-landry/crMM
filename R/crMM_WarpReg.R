@@ -192,9 +192,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
   for (i in 1:total_it) {
     if (i %% 100 == 0) print(i)
 
-    if (i %% 1000 == 0 & !is.null(process_id)) {
-      cat(paste(Sys.time(), "- Process", process_id, "- Completed", i, "iterations\n"))
-      flush.console()
+    if (i %% 2000 == 0 & !is.null(process_id)) {
+      system(sprintf('echo "\n%s - Process %s - Completed %d iterations\n"', Sys.time(), process_id, i))
     }
 
     if (inc_rho == T) {
