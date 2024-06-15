@@ -272,7 +272,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
     acceptance_sums <- phi_out$acceptance
     tau <- phi_out$tau
 
-    B <- BetaUpdate(phi = phi, X = X, Upsilon = Upsilon, B0 = B0, V0 = V0, var_phi = var_phi, U = U)
+    B <- BetaUpdate(phi = phi, X = X, Upsilon = Upsilon, B0 = B0, V0 = V0, var_phi = var_phi, U = U,
+                    it_num = i)
 
     var_phi <- var_phiUpdate_Reg(phi = phi, Upsilon = Upsilon, a_phi = a_phi, b_phi = b_phi,
                                  X = X, B = B, B0 = B0, V0 = V0)
@@ -349,7 +350,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             stochastic_time2 = tt_mat2,
                             fit = fit,
                             fit2 = fit2,
-                            PAF = paf_mat)
+                            PAF = paf_mat,
+                            acceptance_sums = acceptance_sums)
   } else if (inc_rho == T & wantPAF == F){
     final <- construct_crMM(gamma1 = gamma1_mat,
                             gamma2 = gamma2_mat,

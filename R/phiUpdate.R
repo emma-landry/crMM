@@ -29,8 +29,6 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
     stop("'Upsilon' needs to satisfy the image constraint.")
   }
 
-  it_num <- it_num + 1
-
   for (i in 1:N) {
     phi_old <- phi[i, ]
     eta_old <- jupp(phi_old)
@@ -204,17 +202,40 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
     stop("'Upsilon' needs to satisfy the image constraint.")
   }
 
-  it_num <- it_num + 1
-
+  # if (it_num > 14100) {
+  #   print(paste0("Iteration number:", it_num))
+  # }
+  # if (it_num > 14100) {
+  #   print(paste0("var_phi = ", var_phi))
+  # }
   for (i in 1:N) {
     phi_old <- phi[i, ]
+
+    # if (it_num > 10000) {
+    if (TRUE %in% is.na(phi_old)) {
+      print(paste0("Subject ", i, ", phi_old = ", paste(phi_old, collapse = ","), "."))
+    }
+
     eta_old <- jupp(phi_old)
+    if (TRUE %in% is.na(eta_old)) {
+      print(paste0("Subject ", i, ", eta_old = ", paste(eta_old, collapse = ","), "."))
+    }
 
     eta_new <- mvtnorm::rmvnorm(n = 1, mean = eta_old, sigma = tau[i] * diag(Q))
     eta_new[1] <- 0
     eta_new[Q] <- 1
 
+    # if (it_num > 10000) {
+    if (TRUE %in% is.na(eta_new)) {
+      print(paste("Subject ", i, ", eta_new = ", paste(eta_new, collapse = ","), "."))
+    }
+
     phi_new <- as.numeric(juppinv(eta_new))
+
+    #if (it_num > 10000) {
+    if (TRUE %in% is.na(phi_new)) {
+      print(paste0("Subject ", i, ", phi_new = ", paste(phi_new, collapse = ","), "."))
+    }
 
     modelMean_old <- meanWarp(t, c[i], phi_old, rho, tt_basis, gamma1, gamma2, pi[i, ],
                               knots_shape, degree, intercept)
@@ -241,14 +262,32 @@ phiUpdate_Reg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.35) / sqrt(it_num))
   }
+
+
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)
   jupp_means <- apply(jupp_phiT, 1, mean)
   jupp_phiT <- jupp_phiT - jupp_means + jupp(Upsilon)
+  # if (it_num > 10000) {
+  #   cat("Jupp Phi transpose is", "\n")
+  #   print(jupp_phiT)
+  # }
   phiT <- apply(jupp_phiT, 2, juppinv)
+  # if (it_num > 10000) {
+  if (TRUE %in% is.na(phiT)) {
+    cat("Phi transpose is", "\n")
+    print(phiT)
+    cat("Jupp Phi transpose is", "\n")
+    print(jupp_phiT)
+  }
   phi <- t(phiT)
+
+  # if (it_num > 10000) {
+  #   print(paste0("After centering, phi = ", phi, "."))
+  #   print(paste0("The column means are  ", colMeans(phi), " and Upsilon is", Upsilon, "."))
+  # }
 
   metropolis <- list("phi" = phi, "acceptance" = acceptance_sums, "tau" = tau)
   return(metropolis)
@@ -297,8 +336,6 @@ phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
   if (Upsilon[1] != t[1] | Upsilon[Q] != t[n]) {
     stop("'Upsilon' needs to satisfy the image constraint.")
   }
-
-  it_num <- it_num + 1
 
   for (i in 1:N) {
     phi_old <- phi[i, ]

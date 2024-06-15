@@ -4,7 +4,15 @@
 \alias{plot_data}
 \title{Plot of the data}
 \usage{
-plot_data(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "")
+plot_data(
+  t,
+  y,
+  indices = 1:nrow(y),
+  xlab = "x",
+  ylab = "y",
+  title = "",
+  viridis_option = "C"
+)
 }
 \arguments{
 \item{t}{Time points for the x axis. Either a vector that is common for all observations, or a matrix for which
@@ -20,6 +28,8 @@ should be plotted.}
 \item{ylab}{Label for the vertical axis. Default is \code{"y"}.}
 
 \item{title}{Title for the figure. Default is \code{""}.}
+
+\item{viridis_option}{String indicating color map to use for \code{scale_color_viridis_d()}. Default is \code{"C"}.}
 }
 \value{
 A gglpot figure

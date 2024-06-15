@@ -1,4 +1,4 @@
-BetaUpdate <- function(phi, X, Upsilon, B0, V0, var_phi, U){
+BetaUpdate <- function(phi, X, Upsilon, B0, V0, var_phi, U, it_num){
   Q <- ncol(phi)
   N <- nrow(phi)
   l <- ncol(X)
@@ -29,7 +29,21 @@ BetaUpdate <- function(phi, X, Upsilon, B0, V0, var_phi, U){
 
   jupp_mean <- jupp(Upsilon)[-c(1, Q)]
   phiT <- t(phi)
+
+  #if (it_num > 10000) {
+  if (TRUE %in% is.na(phiT)) {
+    cat("The transposed phi are", "\n")
+    print(phiT)
+  }
+
   jupp_phiT <- apply(phiT, 2, jupp)[-c(1, Q),]
+
+  #if (it_num > 10000) {
+  if (TRUE %in% is.na(jupp_phiT)) {
+    cat("The transposed phi after Jupp are", "\n")
+    print(jupp_phiT)
+  }
+
   H <- t(jupp_phiT)
   posterior_mean <- U %*% (t(X) %*% (H - jupp_mean) + V0 %*% B0)
   B <- matrixNormal::rmatnorm(s = 1, M = posterior_mean, U = U, V = var_phi * diag(Q - 2))

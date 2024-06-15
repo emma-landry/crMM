@@ -55,3 +55,30 @@ BsplineCov <- function(df = NULL, knots = NULL, degree = 3, intercept = FALSE) {
 
   return(Covariance)
 }
+
+
+#' Compute the Relative Integrated Mean Squared Error
+#'
+#' @description
+#' `compute_rmse()` computes the Relative Integrated Mean Sqaured Error (R-MISE) between
+#' a reference function and its estimate, evaluated at the same input points.
+#'
+#' @param true Discrete evaluations of the true function
+#' @param fit Discrete evaluations of the estimated function
+#'
+#' @return
+#' The R-MISE value
+#'
+#' @export
+#'
+compute_rmse <- function(true, fit) {
+  n <- length(true)
+
+  if (length(fit) != n) {
+    stop("'true' and 'fit' must have the same length.")
+  }
+
+  rmse <- sum((true- fit) ^ 2)
+  rmse <- rmse / sum(true ^ 2)
+  return(rmse)
+}
