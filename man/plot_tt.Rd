@@ -12,6 +12,7 @@ plot_tt(
   group_colors = c("gold1", "cornflowerblue"),
   group_labels = c("0", "1"),
   covariate_gradient = c("yellow", "blue"),
+  viridis_option = "C",
   xlab = "Physical Time",
   ylab = "Stochastic Time",
   title = "",
@@ -35,6 +36,8 @@ value is not provided.}
 
 \item{covariate_gradient}{Two colors determining the gradient for the covariate values. Default is
 \code{c("yellow", "blue")}.}
+
+\item{viridis_option}{String indicating color map to use for \code{scale_color_viridis_d()}. Default is \code{"C"}.}
 
 \item{xlab}{Label for the horizontal axis. Default is \code{"Physical Time"}.}
 

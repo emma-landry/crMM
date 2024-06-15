@@ -29,15 +29,17 @@ crMM_NoWarp(
   lambda1_init = 0.1,
   lambda2_init = 0.1,
   var_c_init = 0.1,
-  var_e_init = 1
+  var_e_init = 1,
+  process_id = NULL
 )
 }
 \arguments{
 \item{num_it}{The number of MCMC iterations (after burn-in).}
 
-\item{burnin}{The proportion of the iterations eliminated for burn-in. The default is \code{0.2}.
+\item{burnin}{If a number between 0 and 1, the proportion of the iterations eliminated for burn-in.
 The first \code{burnin * num_it} iterations are discarded, and the sampler then runs for another \code{num_it}
-iterations from which samples are recorded.}
+iterations from which samples are recorded. If an integer, the number of iterations to discard, before
+running for another \code{num_it} iterations from which samples are recorded. The default is \code{0.2}.}
 
 \item{t}{The time points at which the data is observed.}
 
@@ -75,6 +77,8 @@ Default is \code{NULL}, in which case the sampler obtains coefficients based on 
 
 \item{lambda1_init, lambda2_init, var_c_init, var_e_init}{Initial values for prior variances.
 Default is \code{0.1}, except for \code{var_e_init} which is \code{1}.}
+
+\item{process_id}{If provided, gives an ID to the iteration for parallel processing. Default is \code{NULL}.}
 }
 \value{
 An object of class \code{crMM_Obj}, consisting of a list with the following items:

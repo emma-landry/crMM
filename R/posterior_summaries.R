@@ -28,9 +28,9 @@
 posterior_shape <- function(crMM_samples, t, p, degree = 3, intercept = FALSE,
                             moments = c('mean'), eval_points = 1000) {
 
-  if (!inherits(crMM_samples, "crMM_Obj")) {
-    stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
-  }
+  # if (!inherits(crMM_samples, "crMM_Obj")) {
+  #   stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
+  # }
 
   df <- ncol(crMM_samples$gamma1)
 

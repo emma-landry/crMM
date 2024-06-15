@@ -66,7 +66,8 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, rescale_pi = TRUE,
                       tuning_pi = 1000, alpha, label1 = NULL, label2 = NULL, wantPAF = FALSE,
                       gamma1_init = NULL, gamma2_init = NULL, lambda1_init = 0.1,
-                      lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1) {
+                      lambda2_init = 0.1, var_c_init = 0.1, var_e_init = 1, var_phi_init = 1,
+                      process_id = NULL) {
 
   # Lengths ---------------------------------------------------------
   n <- length(t)
@@ -135,8 +136,8 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
     pi[label2, 1] <- 0
     pi[label2, 2] <- 1
   }
-  pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
-  pi[, 2] <- 1 - pi[, 1]
+  #pi[, 1] <- (pi[, 1] - min(pi[, 1])) / (max(pi[, 1]) - min(pi[, 1]))
+  #pi[, 2] <- 1 - pi[, 1]
 
   Upsilon <- identityTT(Boundary.knots = c(0, 1), knots = knots_tt,
                          degree = degree_tt, intercept = intercept_tt)
@@ -152,10 +153,16 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
 
   rho <- rho_init
 
+  if (0 <= burnin & burnin <= 1 ){
+    burn_it <- round(num_it * burnin)
+  } else {
+    burn_it <- burnin
+  }
+
+  total_it     <- burn_it + num_it
+
 
   # Storage matrices ------------------------------------------------
-  burn_it      <- round(num_it * burnin)
-  total_it     <- burn_it + num_it
   gamma1_mat   <- matrix(nrow = num_it, ncol = p + 4, data = NA)
   gamma2_mat   <- matrix(nrow = num_it, ncol = p + 4, data = NA)
   c_mat        <- matrix(nrow = num_it, ncol = N, data = NA)
@@ -186,6 +193,10 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
   # Sampling --------------------------------------------------------
   for (i in 1:total_it) {
     if (i %% 100 == 0) print(i)
+
+    if (i %% 2000 == 0 & !is.null(process_id)) {
+      system(sprintf('echo "\n%s - Process %s - Completed %d iterations\n"', Sys.time(), process_id, i))
+    }
 
     if (inc_rho == T) {
       c <- cUpdate_Warp(t = t, y = y, phi = phi, rho = rho, tt_basis = tt_basis,

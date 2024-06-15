@@ -27,6 +27,8 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
 
   N <- nrow(y)
   n <- ncol(y)
+  t1 <- min(t)
+  tn <- max(t)
 
   num_indices <- length(indices)
 
@@ -81,7 +83,17 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
        ggplot2::scale_color_manual(values = line_colors) +
        ggplot2::labs(x = xlab, y = ylab, title = title ) +
        ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5), legend.position = "none")
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5), legend.position = "none",
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank(),
+                      plot.margin = ggplot2::margin(10, 10, 10, 10)) +
+       ggplot2::scale_x_continuous(expand = c(0.01, 0), limits = c(t1, tn))
 
   return(p)
 }
@@ -174,6 +186,7 @@ plot_feature <- function(eval_t, shape, quantile_low, quantile_high, color = "bl
 #' @param ylab Label for the vertical axis. Default is `"Stochastic Time"`.
 #' @param title Title for the figure. Default is `""`.
 #' @param covlab Title for the legend for covariate values. Default is `"Age"`.
+#' @param viridis_option String indicating color map to use for `scale_color_viridis_d()`. Default is `"C"`.
 #'
 #' @return
 #' A ggplot figure.
@@ -185,6 +198,7 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                     group_colors = c("gold1", "cornflowerblue"),
                     group_labels = c("0", "1"),
                     covariate_gradient = c("yellow", "blue"),
+                    viridis_option = "C",
                     xlab = "Physical Time", ylab = "Stochastic Time", title = "", covlab = "Age") {
 
   N <- nrow(tt_functions)
@@ -201,9 +215,9 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                                                         y = .data$Values,
                                                         group = .data$Row_Index,
                                                         color = factor(.data$Row_Index))) +
-         ggplot2::geom_line(linewidth = 0.2) +
+         ggplot2::geom_line(linewidth = 0.4) +
          ggplot2::labs(x = xlab, y = ylab, title = title) +
-         ggplot2::scale_color_viridis_d(option = "A", direction = 1) +
+         ggplot2::scale_color_viridis_d(option = viridis_option, direction = 1) +
          ggplot2::theme_classic() +
          ggplot2::theme(legend.position = "none",
                         axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
@@ -261,7 +275,8 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                                                       color = .data$cov)) +
             ggplot2::geom_line() +
             ggplot2::labs(x = xlab, y = ylab, color = covlab) +
-            ggplot2::scale_color_gradient(low = covariate_gradient[1], high = covariate_gradient[2]) +
+            ggplot2::scale_color_viridis_c(option = viridis_option, direction = -1) +
+            #ggplot2::scale_color_gradient(low = covariate_gradient[1], high = covariate_gradient[2]) +
             ggplot2::theme_classic() +
             ggplot2::ggtitle(group_labels[1]) +
             ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
@@ -283,7 +298,8 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                                                       color = .data$cov)) +
         ggplot2::geom_line() +
         ggplot2::labs(x = xlab, y = ylab, color = covlab) +
-        ggplot2::scale_color_gradient(low = covariate_gradient[1], high = covariate_gradient[2]) +
+        ggplot2::scale_color_viridis_c(option = viridis_option, direction = -1) +
+        #ggplot2::scale_color_gradient(low = covariate_gradient[1], high = covariate_gradient[2]) +
         ggplot2::theme_classic() +
         ggplot2::ggtitle(group_labels[2]) +
         ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
@@ -320,6 +336,7 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
 #' @param xlab Label for the horizontal axis. Default is `"x"`.
 #' @param ylab Label for the vertical axis. Default is `"y"`.
 #' @param title Title for the figure. Default is `""`.
+#' @param viridis_option String indicating color map to use for `scale_color_viridis_d()`. Default is `"C"`.
 #'
 #' @return
 #' A gglpot figure
@@ -328,7 +345,7 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
 #'
 #' @importFrom rlang .data
 #'
-plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "") {
+plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "", viridis_option = "C") {
   n <- ncol(y)
   N <- nrow(y)
   t1 <- min(t)
@@ -357,7 +374,7 @@ plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title =
                        ggplot2::aes(x = .data$x, y = .data$y, group = .data$Row_Index, color = .data$Row_Index)) +
        ggplot2::geom_line() +
        ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::scale_color_viridis_d(option = "A", direction = 1) +
+       ggplot2::scale_color_viridis_d(option = viridis_option, direction = 1) +
        ggplot2::theme_classic() +
        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
                       legend.position = "none",
@@ -549,7 +566,7 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
        ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low,
                                          ymax = .data$f_high,
                                          fill = .data$warping),
-                            alpha = 0.2) +
+                            alpha = alpha) +
        ggplot2::labs(x = xlab, y = ylab, title = title) +
        ggplot2::scale_color_manual(values = color_mapping) +
        ggplot2::scale_fill_manual(values = color_mapping) +
@@ -582,4 +599,70 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
   return(p)
 }
 
+#' Plot shape functions from different samples
+#'
+#' @description
+#' `plot_identifiability()` plots the posterior shape function for the desired feature obtained through
+#' different methods or simulations. It focuses on the identifiability, for plots with confidence bands
+#' and legends see `plot_multiple_feature()`.
+#'
+#' @param eval_t Time points for the horizontal axis.
+#' @param shape List whose elements are the values of the shape function for different simulations.
+#' @param colors Vectors of colors for the line of each shape. Default is
+#' `("red", "blue", "green", "orange", "purple")`, assuming 5 lines are plotted.
+#' @param xlab Label for the horizontal axis. Default is `"x"`.
+#' @param ylab Label for the vertical axis. Default is `"f"`.
+#' @param title Title for the figure. Default is `""`.
+#'
+#' @return
+#' A ggplot figure
+#'
+#' @export
+#'
+#' @importFrom rlang .data
+#'
+plot_identifiability <- function(eval_t, shape,
+                                 colors = c("red", "blue", "green", "orange", "purple"),
+                                 xlab = "x", ylab = "f", title = "") {
+  n <- length(eval_t)
+  t1 <- eval_t[1]
+  tn <- eval_t[n]
+
+  list_names <- names(shape)
+  m <- length(list_names)
+
+  if (length(colors) != m) {
+    stop("Please provide as many colors as there are samples to represent.")
+  }
+
+  plot_df <- data.frame(x = eval_t)
+
+  for (i in 1:m) {
+    plot_df[[paste0("sample", i)]] <- shape[[i]]
+  }
+
+  p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$x))
+
+  for (i in 1:m) {
+    col_name <- paste0("sample", i)
+    p <- p + ggplot2::geom_line(ggplot2::aes(y = !!rlang::sym(col_name)), color = colors[i])
+  }
+
+  p <- p + ggplot2::labs(x = xlab, y = ylab, title = title) +
+       ggplot2::theme_classic() +
+       ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   axis.ticks.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank()) +
+       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  return(p)
+
+}
 

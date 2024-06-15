@@ -86,8 +86,6 @@ gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega
   preMean <- matrix(rep(0, 2 * df), nrow = 2 * df)
   preCov <- matrix(rep(0, 4 * df ^ 2), nrow = 2 * df)
 
-  shape_basis <- splines::bs(x = t, knots = knots_shape, degree = degree, intercept = intercept)
-
   for (i in 1:N) {
     phi_i <- phi[i, ]
     tWarp1 <- tt_basis %*% phi_i
@@ -158,8 +156,6 @@ gammaUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, pi, knots_shape, Omega,
 
   preMean <- matrix(rep(0, 2 * df), nrow = 2 * df)
   preCov <- matrix(rep(0, 4 * df ^ 2), nrow = 2 * df)
-
-  shape_basis <- splines::bs(x = t, knots = knots_shape, degree = degree, intercept = intercept)
 
   for (i in 1:N) {
     phi_i <- phi[i, ]
