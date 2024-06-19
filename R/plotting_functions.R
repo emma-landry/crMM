@@ -147,8 +147,14 @@ plot_feature <- function(eval_t, shape, quantile_low, quantile_high, color = "bl
        ggplot2::labs(x = xlab, y = ylab, title = title) +
        ggplot2::theme_classic() +
        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                      axis.title.y = ggplot2::element_text(margin = ggplot2::margin(r = 0)),
-                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(r = 0))) +
+                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                      axis.line.x = ggplot2::element_line(color = "black"),
+                      axis.line.y = ggplot2::element_line(color = "black"),
+                      panel.grid.major = ggplot2::element_blank(),
+                      panel.grid.minor = ggplot2::element_blank(),
+                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                      panel.background = ggplot2::element_blank()) +
        ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
 
   if (!is.null(background_ind)) {
@@ -156,7 +162,7 @@ plot_feature <- function(eval_t, shape, quantile_low, quantile_high, color = "bl
       line_data <- data.frame(x = t, y = y[background_ind[i], ])
       p <- p + ggplot2::geom_line(data = line_data,
                                   ggplot2::aes(x = .data$x, y = .data$y),
-                                  color = "lightgrey",
+                                  color = "gray68",
                                   linetype = "dashed")
     }
   }
@@ -591,7 +597,7 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
       line_data <- data.frame(x = t, y = y[background_ind[i], ])
       p <- p + ggplot2::geom_line(data = line_data,
                                   ggplot2::aes(x = .data$x, y = .data$y),
-                                  color = "lightgrey",
+                                  color = "gray68",
                                   linetype = "dashed")
     }
   }

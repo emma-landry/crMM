@@ -64,7 +64,7 @@ phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma1, gamma2, pi, kno
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.35) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)
@@ -145,7 +145,7 @@ phiUpdate_NoReg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knot
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.35) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)
@@ -372,7 +372,7 @@ phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
       phi[i, ] <- phi_new
       acceptance_sums[i] <- acceptance_sums[i] + 1
     }
-    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.3) / sqrt(it_num))
+    tau[i] <- tau[i] * (1 + (acceptance_sums[i] / it_num - 0.35) / sqrt(it_num))
   }
   phiT <- t(phi)
   jupp_phiT <- apply(phiT, 2, jupp)

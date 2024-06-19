@@ -316,7 +316,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
           current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis1 %*% gamma1 + pi[j, 2] * shape_basis2 %*% gamma2
           tt_mat2[indexing, ((j - 1) * n + 1): (j * n)] <- tWarp2
         } else {
-          current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis2 %*% gamma1 + pi[j, 2] * shape_basis2 %*% gamma2
+          current_fit[j, ] <- c[j] + pi[j, 1] * shape_basis1 %*% gamma1 + pi[j, 2] * shape_basis1 %*% gamma2
         }
 
         register_fit[j, ] <- c[j] + pi[j, 1] * shape_basis %*% gamma1 + pi[j, 2] * shape_basis %*% gamma2
