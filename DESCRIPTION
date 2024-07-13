@@ -20,5 +20,6 @@ Imports:
     ggplot2,
     rlang,
     gridExtra,
-    tidyr
+    tidyr,
+    extraDistr
     
