@@ -170,6 +170,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
   fit_mat      <- matrix(nrow = num_it, ncol = N * n, data = NA)
   register_mat <- matrix(nrow = num_it, ncol = N * n, data = NA)
   tt_mat       <- matrix(nrow = num_it, ncol = N * n, data = NA)
+  loglik       <- matrix(nrow = num_it, ncol = 1, data = NA)
   current_fit  <- matrix(0, nrow = N, ncol = n)
   register_fit <- matrix(0, nrow = N, ncol = n)
   fit          <- matrix(0, nrow = N, ncol = n)
@@ -332,6 +333,12 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
       r2   <- 1 / indexing
       fit  <- r1 * fit + r2 * current_fit
       fit2 <- r1 * fit2 + r2* current_fit ^ 2
+
+      loglikelihood <- Likelihood(t = t, y = y, c = c, gamma1 = gamma1, gamma2 = gamma2,
+                                  pi = pi, shape_basis = shape_basis, knots_shape = knots_shape,
+                                  degree = 3, var_e = var_e, phi = phi, tt_basis = tt_basis,
+                                  rho = rho, intercept = T, log = T)
+      loglik[indexing, ] <- loglikelihood
     }
   }
 
@@ -351,7 +358,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             fit = fit,
                             fit2 = fit2,
                             PAF = paf_mat,
-                            acceptance_sums = acceptance_sums)
+                            acceptance_sums = acceptance_sums,
+                            loglik = loglik)
   } else if (inc_rho == T & wantPAF == F){
     final <- construct_crMM(gamma1 = gamma1_mat,
                             gamma2 = gamma2_mat,

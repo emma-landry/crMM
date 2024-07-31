@@ -228,13 +228,13 @@ Likelihood <- function(t, y, c, gamma1, gamma2, pi, shape_basis = NULL, knots_sh
     if (log == F){
       likelihood <- 1
       for (i in 1:N) {
-        likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean, sigma = var_e * diag(n), log = log)
+        likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean[i, ], sigma = var_e * diag(n), log = log)
         likelihood <- likelihood  * likelihood_i
       }
     } else {
       likelihood <- 0
       for (i in 1:N) {
-        likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean, sigma = var_e * diag(n), log = log)
+        likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean[i, ], sigma = var_e * diag(n), log = log)
         likelihood <- likelihood + likelihood_i
       }
     }
