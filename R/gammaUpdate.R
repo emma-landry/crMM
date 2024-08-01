@@ -79,9 +79,9 @@ gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega
     stop("The time-transformation spline basis 'tt_basis' must have the same number of columns as 'phi'.")
   }
 
-  if (rho < 0 | rho > 1) {
-    stop("'rho' must be between 0 and 1.")
-  }
+  # if (rho < 0 | rho > 1) {
+  #   stop("'rho' must be between 0 and 1.")
+  # }
 
   preMean <- matrix(rep(0, 2 * df), nrow = 2 * df)
   preCov <- matrix(rep(0, 4 * df ^ 2), nrow = 2 * df)

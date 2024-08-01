@@ -81,9 +81,9 @@ meanWarp <- function(t, c, phi, rho, tt_basis, gamma1, gamma2, pi, knots_shape, 
     stop("The time-transformation spline basis 'tt_basis' must have the same number of columns as 'phi'.")
   }
 
-  if (rho < 0 | rho > 1) {
-    stop("'rho' must be between 0 and 1.")
-  }
+  # if (rho < 0 | rho > 1) {
+  #   stop("'rho' must be between 0 and 1.")
+  # }
 
   if (N == 1) {
     tWarp1 <- tt_basis %*% phi

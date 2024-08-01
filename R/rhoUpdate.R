@@ -17,7 +17,7 @@ rhoUpdate <- function(t, y, c, phi, rho, tt_basis, pi, gamma1, gamma2, knots_sha
   P0 <- 0
   rho_old <- rho
   # rho_new <- stats::rbeta(n = 1, shape1 = 1 / (1 - rho_old), shape2 = 2)
-  rho_new <- extraDistr::rtnorm(n = 1, mean = rho_old, sd = 0.01, a = 0, b = 1)
+  rho_new <- extraDistr::rtnorm(n = 1, mean = rho_old, sd = 0.01, a = 0, b = Inf)
 
   for (i in 1:N) {
     modelMean_old <- meanWarp(t, c[i], phi[i, ], rho_old, tt_basis, gamma1, gamma2, pi[i, ],
@@ -39,8 +39,8 @@ rhoUpdate <- function(t, y, c, phi, rho, tt_basis, pi, gamma1, gamma2, knots_sha
   P1 <- P1 + stats::dgamma(rho_new, shape = 0.5 , rate = 0.5 , log = T)
   P0 <- P0 + stats::dgamma(rho_old, shape = 0.5, rate = 0.5, log = T)
 
-  Q1 <- extraDistr::dtnorm(x = rho_new, mean = rho_old, sd = 0.01, a = 0, b = 1, log = T)
-  Q0 <- extraDistr::dtnorm(x = rho_old, mean = rho_new, sd = 0.01, a = 0, b = 1, log = T)
+  Q1 <- extraDistr::dtnorm(x = rho_new, mean = rho_old, sd = 0.01, a = 0, b = Inf, log = T)
+  Q0 <- extraDistr::dtnorm(x = rho_old, mean = rho_new, sd = 0.01, a = 0, b = Inf, log = T)
 
   ratio <- (P1 - Q1) - (P0 - Q0)
   if (log(stats::runif(1)) < ratio) {
