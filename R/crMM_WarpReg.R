@@ -375,7 +375,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             stochastic_time = tt_mat,
                             stochastic_time2 = tt_mat2,
                             fit = fit,
-                            fit2 = fit2)
+                            fit2 = fit2,
+                            loglik = loglik)
   } else if (inc_rho == F & wantPAF == T) {
     final <- construct_crMM(gamma1 = gamma1_mat,
                             gamma2 = gamma2_mat,
@@ -389,7 +390,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             stochastic_time = tt_mat,
                             fit = fit,
                             fit2 = fit2,
-                            PAF = paf_mat)
+                            PAF = paf_mat,
+                            loglik = loglik)
   } else {
     final <- construct_crMM(gamma1 = gamma1_mat,
                             gamma2 = gamma2_mat,
@@ -402,7 +404,8 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
                             registered_fit = register_mat,
                             stochastic_time = tt_mat,
                             fit = fit,
-                            fit2 = fit2)
+                            fit2 = fit2,
+                            loglik = loglik)
   }
   return(final)
 }

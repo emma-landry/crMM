@@ -448,7 +448,7 @@ plot_posterior_hist <- function(sample, colors = c("gold", "darkblue"), xlab = "
                       panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
                       panel.background = ggplot2::element_blank()) +
     ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(min(data), max(data))) +
-    ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, max_density + 0.2))
+    ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, max_density + 0.3))
 
   return(p)
 }
