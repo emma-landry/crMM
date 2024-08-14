@@ -296,7 +296,7 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                            panel.background = ggplot2::element_blank(),
                            plot.margin = ggplot2::margin(10, 10, 10, 10)) +
             ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
-            ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(t1, tn))
+            ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(min(tt_functions), max(tt_functions)))
 
       p1 <- ggplot2::ggplot(data = df_1, ggplot2::aes(x = .data$x,
                                                       y = .data$y,
@@ -319,7 +319,7 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                        panel.background = ggplot2::element_blank(),
                        plot.margin = ggplot2::margin(10, 10, 10, 10)) +
         ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
-        ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(t1, tn))
+        ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(min(tt_functions), max(tt_functions)))
 
       p <- gridExtra::grid.arrange(p0, p1, ncol = 2,
                                    top = grid::textGrob(title,
@@ -343,22 +343,27 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
 #' @param ylab Label for the vertical axis. Default is `"y"`.
 #' @param title Title for the figure. Default is `""`.
 #' @param viridis_option String indicating color map to use for `scale_color_viridis_d()`. Default is `"C"`.
-#'
+#' If `NULL`, plots in a single color rather than with the viridis gradient.
+#' @param color Color to plot in if `viridis_option` is `NULL`. Default is `"grey"`.
+
 #' @return
-#' A gglpot figure
+#' A ggplot figure
 #'
 #' @export
 #'
 #' @importFrom rlang .data
 #'
-plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "", viridis_option = "C") {
+plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title = "", viridis_option = "C",
+                      color = "grey") {
   n <- ncol(y)
   N <- nrow(y)
+  y <- y[indices, ]
   t1 <- min(t)
   tn <- max(t)
 
   if (is.matrix(t)){
     if (nrow(t) == 1 | ncol(t) == 1) {
+      N <- nrow(y)
       t <- as.numeric(t)
       if (length(t) != n) {
         stop("The dimensions of 't' and 'y' don't match.")
@@ -368,19 +373,22 @@ plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title =
       if (nrow(t) != N | ncol(t) != n) {
         stop("The dimensions of 't' and 'y' don't match.")
       }
+      t <- t[indices, ]
+      N <- nrow(y)
       data <- data.frame(x = c(t), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
     }
   } else {
+    N <- nrow(y)
     if (length(t) != n) {
       stop("The dimensions of 't' and 'y' don't match.")
     }
     data <- data.frame(x = rep(t, each = N), y = c(y), Row_Index = paste0("X", rep(1:N, n)))
   }
   p <- ggplot2::ggplot(data = data,
-                       ggplot2::aes(x = .data$x, y = .data$y, group = .data$Row_Index, color = .data$Row_Index)) +
+                       ggplot2::aes(x = .data$x, y = .data$y, group = .data$Row_Index,
+                                    color = .data$Row_Index, linetype = .data$Row_Index)) +
        ggplot2::geom_line() +
        ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::scale_color_viridis_d(option = viridis_option, direction = 1) +
        ggplot2::theme_classic() +
        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
                       legend.position = "none",
@@ -393,6 +401,19 @@ plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title =
                       panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
                       panel.background = ggplot2::element_blank()) +
        ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+
+  if (!is.null(viridis_option)) {
+    p <- p + ggplot2::scale_color_viridis_d(option = viridis_option, direction = 1)
+  } else {
+    available_linetypes <- c("solid", "dashed", "dotted", "dotdash",
+                             "longdash", "twodash", "1F", "2F", "3F",
+                             "4F", "12345678", "longdash", "twodash")
+    unique_rows <- unique(data$Row_Index)
+    set.seed(15)
+    random_linetypes <- sample(available_linetypes, length(unique_rows), replace = TRUE)
+    p <- p + ggplot2::scale_color_manual(values = rep(color, length(unique(data$Row_Index)))) +
+         ggplot2::scale_linetype_manual(values = random_linetypes)
+  }
 
   return(p)
 }

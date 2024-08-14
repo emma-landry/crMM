@@ -11,7 +11,8 @@ plot_data(
   xlab = "x",
   ylab = "y",
   title = "",
-  viridis_option = "C"
+  viridis_option = "C",
+  color = "grey"
 )
 }
 \arguments{
@@ -29,10 +30,13 @@ should be plotted.}
 
 \item{title}{Title for the figure. Default is \code{""}.}
 
-\item{viridis_option}{String indicating color map to use for \code{scale_color_viridis_d()}. Default is \code{"C"}.}
+\item{viridis_option}{String indicating color map to use for \code{scale_color_viridis_d()}. Default is \code{"C"}.
+If \code{NULL}, plots in a single color rather than with the viridis gradient.}
+
+\item{color}{Color to plot in if \code{viridis_option} is \code{NULL}. Default is \code{"grey"}.}
 }
 \value{
-A gglpot figure
+A ggplot figure
 }
 \description{
 \code{plot_data()} plots the rows of the matrix of observations.
