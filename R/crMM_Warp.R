@@ -257,7 +257,6 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                        gamma1 = gamma1, gamma2 = gamma2, knots_shape = knots_shape,
                        degree = degree_shape, intercept = intercept_shape, var_e = var_e)
 
-      rho <- 0
     }
 
     if (inc_rho == T) {
