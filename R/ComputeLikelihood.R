@@ -192,7 +192,12 @@ kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, 
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
-  K <- ncol(gamma)
+
+  if (is.matrix(gamma)) {
+    K <- ncol(gamma)
+  } else {
+    K <- 1
+  }
 
   if (!is.null(rho)) {
     warp_num <- length(rho)
@@ -211,10 +216,6 @@ kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, 
   }
 
   if (is.matrix(gamma)) {
-    if (ncol(gamma) != K) {
-      stop("The number of columns of 'gamma' must match the number of latent features.")
-    }
-
     if (nrow(gamma) != df) {
       stop("The number of rows of 'gamma' must match the B-spline dimensions
            implied by the length of 'knots_shape', and values of 'degree' and 'intercept'.")
