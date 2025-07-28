@@ -284,3 +284,60 @@ piUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
   return(pi)
 }
 
+kfeature_piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma, pi, knots_shape, degree = 3,
+                          intercept = F, var_e, alpha, tuning_param = 1000) {
+  n <- length(t)
+  N <- length(c)
+  K <- ncol(pi)
+
+  if (nrow(y) != N){
+    stop("The number of rows in 'y' must match the length of 'c'.")
+  }
+
+  if (ncol(y) != n) {
+    stop("The number columns in 'y' must match the length of 't'.")
+  }
+
+  if (nrow(pi) != N) {
+    stop("The number of rows in 'pi' must match the length of 'c'.")
+  }
+
+
+  for (i in 1:N) {
+    pi_old <- pi[i, ]
+    pi_new <- LaplacesDemon::rdirichlet(n = 1, alpha = tuning_param * pi_old)
+
+    pi_new[pi_new < 1e-4] <- 1e-4
+    pi_new <- pi_new / sum(pi_new)
+
+    modelMean_old <- kfeature_meanWarp(t, c[i], phi[i, ], rho, tt_basis, gamma, pi_old,
+                              knots_shape, degree, intercept)
+    modelMean_new <- kfeature_meanWarp(t, c[i], phi[i, ], rho, tt_basis, gamma, pi_new,
+                              knots_shape, degree, intercept)
+    y_i <- y[i, ]
+
+    P1 <- -1 / (2 * var_e) * sum((y_i - modelMean_new) ^ 2)
+    for (k in 1:K) {
+      P1 <- P1 + (alpha[k] - 1) * log(pi_new[k])
+    }
+
+    Q1 <- LaplacesDemon::ddirichlet(pi_new, alpha = tuning_param * pi_old, log = T)
+
+    P0 <- -1 / (2 * var_e) * sum((y_i - modelMean_old) ^ 2)
+    for (k in 1:K) {
+      P0 <- P0 + (alpha[k] - 1) * log(pi_old[k])
+    }
+
+    Q0 <- LaplacesDemon::ddirichlet(pi_old, alpha = tuning_param * pi_new, log = T)
+
+    ratio <- (P1 - Q1) - (P0 - Q0)
+
+    if (log(stats::runif(1)) < ratio) {
+      pi_old <- pi_new
+    }
+    pi[i, ] <- pi_old
+  }
+
+  return(pi)
+}
+
