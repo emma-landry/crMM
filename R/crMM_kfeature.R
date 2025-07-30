@@ -61,7 +61,7 @@
 #'
 #' @export
 #'
-kfeature_crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
+crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
                       K, warp_num, rho_init = rep(0.5, warp_num), h, degree_tt = 3, intercept_tt = FALSE,
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi,
                       tuning_pi = 1000, alpha, gamma_init = NULL, lambda_init = rep(0.1, K),
