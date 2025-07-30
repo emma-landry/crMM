@@ -386,6 +386,48 @@ Likelihood <- function(t, y, c, gamma1, gamma2, pi, shape_basis = NULL, knots_sh
   return(likelihood)
 }
 
+kfeature_Likelihood <- function(t, y, c, gamma, pi, knots_shape, degree = 3,
+                       var_e, phi, tt_basis, rho, intercept = F, log = F) {
+  n <- length(t)
+  N <- length(c)
+
+  if (nrow(y) != N){
+    stop("The number of rows in 'y' must match the length of 'c'.")
+  }
+
+  if (ncol(y) != n) {
+    stop("The number columns in 'y' must match the length of 't'.")
+  }
+
+  modelMean <- kfeature_meanWarp(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, degree = degree, intercept = interce[t])
+
+  if (N == 1){
+    likelihood <- mvtnorm::dmvnorm(x = y, mean = modelMean, sigma = var_e * diag(n), log = log)
+  } else {
+    if (log == F){
+      likelihood <- 1
+      for (i in 1:N) {
+        likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean[i, ], sigma = var_e * diag(n), log = log)
+        likelihood <- likelihood  * likelihood_i
+      }
+    } else {
+      likelihood <- 0
+      for (i in 1:N) {
+        likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean[i, ], sigma = var_e * diag(n), log = log)
+        likelihood <- likelihood + likelihood_i
+      }
+    }
+  }
+  return(likelihood)
+}
+
+
+
+
+
+
+
+
 
 
 

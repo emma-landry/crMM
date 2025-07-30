@@ -22,15 +22,15 @@ kfeature_lambdaUpdate <- function(gamma, a_l, b_l, Omega){
     lambdas <- rep(0, ncol(gamma))
     for (k in 1:ncol(gamma)){
       gamma_k <- matrix(gamma[, k], nrow = df)
-      lambdas[k] <- 1 / stats::rgamma(n = 1, shape = a_l + df / 2,
+      lambda[k] <- 1 / stats::rgamma(n = 1, shape = a_l + df / 2,
                                       rate = b_l + t(gamma_k) %*% Omega %*% gamma_k / 2)
     }
   } else {
     gamma <- matrix(gamma, nrow = df)
-    lambdas <- 1 / stats::rgamma(n = 1, shape = a_l + df / 2,
+    lambda <- 1 / stats::rgamma(n = 1, shape = a_l + df / 2,
                                 rate = b_l + t(gamma) %*% Omega %*% gamma / 2)
   }
-  return(lambdas)
+  return(lambda)
 }
 
 var_eUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, shape_basis, a_e, b_e) {

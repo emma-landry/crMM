@@ -426,10 +426,18 @@ kfeature_phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma, pi, kno
 
     phi_new <- as.numeric(juppinv(eta_new))
 
-    modelMean_old <- kfeature_meanWarp(t, c[i], phi_old, rho, tt_basis, gamma, pi[i, ],
-                              knots_shape, degree, intercept)
-    modelMean_new <- kfeature_meanWarp(t, c[i], phi_new, rho, tt_basis, gamma, pi[i, ],
-                              knots_shape, degree, intercept)
+    if (K > 1) {
+      modelMean_old <- kfeature_meanWarp(t, c[i], phi_old, rho, tt_basis, gamma, pi[i, ],
+                                         knots_shape, degree, intercept)
+      modelMean_new <- kfeature_meanWarp(t, c[i], phi_new, rho, tt_basis, gamma, pi[i, ],
+                                         knots_shape, degree, intercept)
+    } else {
+      modelMean_old <- kfeature_meanWarp(t, c[i], phi_old, rho, tt_basis, gamma, pi[i],
+                                         knots_shape, degree, intercept)
+      modelMean_new <- kfeature_meanWarp(t, c[i], phi_new, rho, tt_basis, gamma, pi[i],
+                                         knots_shape, degree, intercept)
+    }
+
 
     y_i <- y[i, ]
 
