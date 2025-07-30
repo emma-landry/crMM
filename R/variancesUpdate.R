@@ -16,6 +16,23 @@ lambdaUpdate <- function(gamma1, gamma2, a_l, b_l, Omega){
   return(lambdas)
 }
 
+kfeature_lambdaUpdate <- function(gamma, a_l, b_l, Omega){
+  df <- nrow(Omega)
+  if (is.matrix(gamma)){
+    lambdas <- rep(0, ncol(gamma))
+    for (k in 1:ncol(gamma)){
+      gamma_k <- matrix(gamma[, k], nrow = df)
+      lambdas[k] <- 1 / stats::rgamma(n = 1, shape = a_l + df / 2,
+                                      rate = b_l + t(gamma_k) %*% Omega %*% gamma_k / 2)
+    }
+  } else {
+    gamma <- matrix(gamma, nrow = df)
+    lambdas <- 1 / stats::rgamma(n = 1, shape = a_l + df / 2,
+                                rate = b_l + t(gamma) %*% Omega %*% gamma / 2)
+  }
+  return(lambdas)
+}
+
 var_eUpdate_NoWarp <- function(t, y, c, gamma1, gamma2, pi, shape_basis, a_e, b_e) {
   n <- length(t)
   N <- length(c)
@@ -67,6 +84,25 @@ var_eUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, kno
   }
 
   modelMean <- meanWarp_alt(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, degree, intercept)
+  squaredSums <- sum(rowSums((y - modelMean) ^ 2))
+  var_e <- 1 / stats::rgamma(n = 1, shape = a_e + n * N / 2, rate = b_e + squaredSums / 2)
+  return(var_e)
+}
+
+kfeature_var_eUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma, pi, knots_shape,
+                                      degree = 3, intercept = F, a_e, b_e) {
+  n <- length(t)
+  N <- length(c)
+
+  if (nrow(y) != N){
+    stop("The number of rows in 'y' must match the length of 'c'.")
+  }
+
+  if (ncol(y) != n) {
+    stop("The number columns in 'y' must match the length of 't'.")
+  }
+
+  modelMean <- kfeature_meanWarp(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, degree, intercept)
   squaredSums <- sum(rowSums((y - modelMean) ^ 2))
   var_e <- 1 / stats::rgamma(n = 1, shape = a_e + n * N / 2, rate = b_e + squaredSums / 2)
   return(var_e)
