@@ -391,6 +391,7 @@ kfeature_phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma, pi, kno
   n <- length(t)
   N <- length(c)
   Q <- ncol(phi)
+  K <- ncol(gamma)
 
   if (nrow(y) != N){
     stop("The number of rows in 'y' must match the length of 'c'.")

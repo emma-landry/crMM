@@ -15,7 +15,7 @@ plot_data_cd(
   covlab = "Age",
   group_labels = c("0", "1"),
   viridis_option = "C",
-  legend_position = c(0.8, 0.8)
+  legend_position = c(0.85, 0.78)
 )
 }
 \arguments{
@@ -43,7 +43,7 @@ value is not provided.}
 \item{viridis_option}{String indicating color map to use for \code{scale_color_viridis_d()}. Default is \code{"C"}.
 If \code{NULL}, plots in a single color rather than with the viridis gradient.}
 
-\item{legend_position}{Vector of coordinates for the location of the legend. Default is \code{c(0.8, 0.8)}.}
+\item{legend_position}{Vector of coordinates for the location of the legend. Default is \code{c(0.85, 0.78)}.}
 }
 \value{
 A ggplot figure

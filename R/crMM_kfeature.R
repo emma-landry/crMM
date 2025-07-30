@@ -61,7 +61,7 @@
 #'
 #' @export
 #'
-crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
+kfeature_crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
                       K, warp_num, rho_init = rep(0.5, warp_num), h, degree_tt = 3, intercept_tt = FALSE,
                       a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi,
                       tuning_pi = 1000, alpha, gamma_init = NULL, lambda_init = rep(0.1, K),
@@ -213,7 +213,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
     var_c <- var_cUpdate(c = c, a_c = a_c, b_c = b_c)
 
     gamma <- kfeature_gammaUpdate_Warp(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
-                                       knots_shape = knots_shape, Omega = Omega, lambda1 = lambda,
+                                       knots_shape = knots_shape, Omega = Omega, lambda = lambda,
                                        var_e = var_e, degree = degree_shape, intercept = intercept_shape)
 
     lambda <- kfeature_lambdaUpdate(gamma = gamma, a_l = a_l, b_l = b_l, Omega = Omega)
@@ -222,7 +222,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
       pi <- kfeature_piUpdate_Warp(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
                                    gamma = gamma, pi = pi, knots_shape = knots_shape,
                                    degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                                   alpha = alpha, rescale = rescale_pi, tuning_param = tuning_pi)
+                                   alpha = alpha, tuning_param = tuning_pi)
     }
 
 
@@ -346,7 +346,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
   }
 
   if (warp_num > 0) {
-    final <- construct_crMM(gamma = gamma1_mats,
+    final <- construct_crMM(gamma = gamma_mats,
                             c = c_mat,
                             variance = var_mat,
                             phi = phi_mat,
@@ -360,7 +360,7 @@ crMM_Warp <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept
                             fit2 = fit2,
                             loglik = loglik)
   } else {
-    final <- construct_crMM(gamma = gamma1_mats,
+    final <- construct_crMM(gamma = gamma_mats,
                             c = c_mat,
                             variance = var_mat,
                             phi = phi_mat,

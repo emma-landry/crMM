@@ -56,6 +56,7 @@ kfeature_rhoUpdate <- function(t, y, c, phi, rho, tt_basis, pi, gamma, knots_sha
   N <- length(c)
   Q <- ncol(phi)
   warp_num <- length(rho)
+  K <- ncol(gamma)
 
   if (nrow(y) != N){
     stop("The number of rows in 'y' must match the length of 'c'.")
