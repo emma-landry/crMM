@@ -63,7 +63,7 @@
 #'
 crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
                       K, warp_num, rho_init = rep(0.5, warp_num), h, degree_tt = 3, intercept_tt = FALSE,
-                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi,
+                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, reg = 1,
                       tuning_pi = 1000, alpha, gamma_init = NULL, lambda_init = rep(0.1, K),
                       var_c_init = 0.1, var_e_init = 1, var_phi_init = 1,
                       process_id = NULL) {
@@ -81,7 +81,11 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
     stop("The number columns in 'y' must match the length of 't'.")
   }
 
-  if (warp_num == 0) {
+
+  if (is.null(warp_num)) {
+    rho_init <- rep(1, K - 1)
+    warp_num <- -1
+  } else if (warp_num == 0) {
     rho_init <- NULL
   } else {
     if (any(rho_init < 0 | rho_init > 1)) {
@@ -159,6 +163,8 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
 
   rho <- rho_init
 
+  a <- rep(1, K)
+
   if (0 <= burnin & burnin <= 1 ){
     burn_it <- round(num_it * burnin)
   } else {
@@ -177,7 +183,8 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
   }
 
   c_mat        <- matrix(nrow = num_it, ncol = N, data = NA)
-  var_mat      <- matrix(nrow = num_it, ncol = (4 + K), data = NA)
+  a_mat        <- matrix(nrow = num_it, ncol = K, data = NA)
+  var_mat      <- matrix(nrow = num_it, ncol = (3 + K), data = NA)
   phi_mat      <- matrix(nrow = num_it, ncol = N * Q, data = NA)
   fit_mat      <- matrix(nrow = num_it, ncol = N * n, data = NA)
   register_mat <- matrix(nrow = num_it, ncol = N * n, data = NA)
@@ -201,43 +208,58 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
   for (i in 1:total_it) {
     if (i %% 100 == 0) print(i)
 
-    if (i %% 2000 == 0 & !is.null(process_id)) {
+    if (i %% 200 == 0 & !is.null(process_id)) {
       system(sprintf('echo "\n%s - Process %s - Completed %d iterations\n"', Sys.time(), process_id, i))
     }
 
-    c <- kfeature_cUpdate_Warp(t = t, y = y, phi = phi, rho = rho, tt_basis = tt_basis,
+    c <- kfeature_cUpdate_Warp(t = t, y = y, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                                gamma = gamma, pi = pi, knots_shape = knots_shape,
                                var_c = var_c, var_e = var_e, degree = degree_shape, intercept = intercept_shape)
 
 
     var_c <- var_cUpdate(c = c, a_c = a_c, b_c = b_c)
 
-    gamma <- kfeature_gammaUpdate_Warp(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
-                                       knots_shape = knots_shape, Omega = Omega, lambda = lambda,
-                                       var_e = var_e, degree = degree_shape, intercept = intercept_shape)
+    a <- kfeature_aUpdate(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
+                 gamma = gamma, pi = pi, knots_shape = knots_shape, degree = degree_shape,
+                  intercept = intercept_shape, var_e = var_e, common_a = T)
+
+    gamma <- kfeature_gammaUpdate_Warp(
+      t = t, y = y, c = c, a = a, K = K, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
+      knots_shape = knots_shape, Omega = Omega, lambda = lambda,
+      var_e = var_e, degree = degree_shape, intercept = intercept_shape
+    )
 
     lambda <- kfeature_lambdaUpdate(gamma = gamma, a_l = a_l, b_l = b_l, Omega = Omega)
 
+
+
     if (K > 1) {
-      pi <- kfeature_piUpdate_Warp(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
+      if (i <= burn_it) {
+        temperature_pi <- max(1, 1 + 5 * (1 - i / burn_it))  # cooling from 6 to 1
+      } else {
+        temperature_pi <- 1
+      }
+
+      pi <- kfeature_piUpdate_Warp(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                                    gamma = gamma, pi = pi, knots_shape = knots_shape,
                                    degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                                   alpha = alpha, tuning_param = tuning_pi)
+                                   alpha = alpha, tuning_param = tuning_pi, repulsive = T,
+                                   temperature = temperature_pi)
     }
 
 
-    var_e <- kfeature_var_eUpdate_Warp(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
+    var_e <- kfeature_var_eUpdate_Warp(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                                       gamma = gamma, pi = pi, knots_shape = knots_shape,
                                       degree = degree_shape, intercept = intercept_shape, a_e = a_e, b_e = b_e)
 
     if (warp_num > 0) {
-      rho <- kfeature_rhoUpdate(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
+      rho <- kfeature_rhoUpdate(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
                        gamma = gamma, knots_shape = knots_shape,
                        degree = degree_shape, intercept = intercept_shape, var_e = var_e)
 
     }
 
-    phi_out <- kfeature_phiUpdate_NoReg(t = t, y = y, c = c, phi = phi, rho = rho, tt_basis = tt_basis,
+    phi_out <- kfeature_phiUpdate_NoReg(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                                  gamma = gamma, pi = pi, knots_shape = knots_shape,
                                  degree = degree_shape, intercept = intercept_shape, var_e = var_e,
                                  var_phi = var_phi, Upsilon = Upsilon, tau = tau, it_num = i,
@@ -260,6 +282,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
       }
 
       c_mat[indexing, ]     <- c
+      a_mat[indexing, ]     <- a
       var_mat[indexing, ]   <- c(lambda, var_c, var_e, var_phi)
       phi_mat[indexing, ]   <- matrix(t(phi), ncol = N * Q, byrow = T)
 
@@ -272,21 +295,22 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
         phi_j <- phi[j, ]
         if (warp_num == 0) {
           tWarp <- tt_basis %*% phi_j
+          tt_mat[indexing, ] <- tWarp
           if (K == 1) {
             shape_basis_k <- splines::bs(x = tWarp, knots = knots_shape,
                                        degree = degree_shape, intercept = intercept_shape)
-            current_fit[j, ] <- c[j] + pi[j] * shape_basis_k %*% gamma
+            current_fit[j, ] <- c[j] + a * pi[j] * shape_basis_k %*% gamma
           } else {
             current_fit[j, ] <- c[j]
             for (k in 1: K) {
               if (k == 1){
                 shape_basis_k <- splines::bs(x = tWarp, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
               } else {
                 shape_basis_k <- splines::bs(x = t, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
               }
             }
 
@@ -295,31 +319,32 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
           for (k in 1:K) {
             if (k == 1) {
               tWarp <- tt_basis %*% phi_j
+              tt_mat[indexing, ] <- tWarp
               shape_basis_k <- splines::bs(x = tWarp, knots = knots_shape,
                                          degree = degree_shape, intercept = intercept_shape)
-              current_fit[j, ] <- current_fit[j, ] + pi[j, k] * shape_basis_k %*% gamma[, k]
+              current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
             } else {
               if (k > 1 & warp_num >= (k - 1)) {
                 tWarp <- rho[k - 1] * (tt_basis %*% phi_j - t) + t
                 tt_mats[[k - 1]][indexing, ] <- tWarp
                 shape_basis_k <- splines::bs(x = tWarp, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
               } else {
                 shape_basis_k <- splines::bs(x = t, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
               }
             }
           }
         }
 
         if (K == 1){
-          register_fit[j, ] <- c[j] + pi[j] * shape_basis %*% gamma
+          register_fit[j, ] <- c[j] + a * pi[j] * shape_basis %*% gamma
         } else {
           register_fit[j, ] <- c[j]
           for (k in 1:K){
-            register_fit[j, ] <- register_fit[j, ] + pi[j, k] * shape_basis %*% gamma[, k]
+            register_fit[j, ] <- register_fit[j, ] + a * pi[j, k] * shape_basis %*% gamma[, k]
           }
         }
 
@@ -332,22 +357,20 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
       fit  <- r1 * fit + r2 * current_fit
       fit2 <- r1 * fit2 + r2* current_fit ^ 2
 
-      function(t, y, c, gamma, pi, knots_shape, degree = 3,
-               var_e, phi, tt_basis, rho, intercept = F, log = F) {
-
-      loglikelihood <- kfeature_Likelihood(t = t, y = y, c = c, gamma= gamma,
+      loglikelihood <- kfeature_Likelihood(t = t, y = y, c = c, a = a, gamma= gamma,
                                   pi = pi,knots_shape = knots_shape,
                                   degree = 3, var_e = var_e, phi = phi, tt_basis = tt_basis,
                                   rho = rho, intercept = T, log = T)
 
       loglik[indexing, ] <- loglikelihood
-    }
+
   }
   }
 
   if (warp_num > 0) {
     final <- construct_crMM(gamma = gamma_mats,
                             c = c_mat,
+                            a = a_mat,
                             variance = var_mat,
                             phi = phi_mat,
                             rho = rho_mat,
@@ -362,9 +385,9 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
   } else {
     final <- construct_crMM(gamma = gamma_mats,
                             c = c_mat,
+                            a = a_mat,
                             variance = var_mat,
                             phi = phi_mat,
-                            rho = rho_mat,
                             pi = pi_mats,
                             fit_sample = fit_mat,
                             registered_fit = register_mat,

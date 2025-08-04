@@ -188,7 +188,7 @@ meanWarp_alt <- function(t, c, phi, tt_basis, gamma1, gamma2, pi, knots_shape, d
   return(modelMean)
 }
 
-kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, degree = 3, intercept = F) {
+kfeature_meanWarp <- function(t, c, a, phi, rho, tt_basis, gamma, pi, knots_shape, degree = 3, intercept = F) {
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
@@ -274,7 +274,7 @@ kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, 
       tWarp <- tt_basis %*% phi
       shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
       f <- shape_basis %*% gamma
-      modelMean <- c + pi * f
+      modelMean <- c + a * pi * f
     } else {
       modelMean <- c
       for (k in 1:K) {
@@ -293,7 +293,7 @@ kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, 
         }
         shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
         f <- shape_basis %*% gamma[, k]
-        modelMean <- modelMean + pi[k] * f
+        modelMean <- modelMean + a[k] * pi[k] * f
       }
     }
 
@@ -304,7 +304,7 @@ kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, 
         tWarp <- tt_basis %*% phi[i, ]
         shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
         f <- shape_basis %*% gamma
-        modelMean_temp <- c[i] + pi[i] * f
+        modelMean_temp <- c[i] + a * pi[i] * f
       } else {
         modelMean_temp <- c[i]
         for (k in 1:K) {
@@ -323,7 +323,7 @@ kfeature_meanWarp <- function(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, 
           }
           shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
           f <- shape_basis %*% gamma[, k]
-          modelMean_temp <- modelMean_temp + pi[i, k] * f
+          modelMean_temp <- modelMean_temp + a[k] * pi[i, k] * f
         }
       }
       modelMean[i, ] <- modelMean_temp
@@ -386,7 +386,7 @@ Likelihood <- function(t, y, c, gamma1, gamma2, pi, shape_basis = NULL, knots_sh
   return(likelihood)
 }
 
-kfeature_Likelihood <- function(t, y, c, gamma, pi, knots_shape, degree = 3,
+kfeature_Likelihood <- function(t, y, c, a, gamma, pi, knots_shape, degree = 3,
                        var_e, phi, tt_basis, rho, intercept = F, log = F) {
   n <- length(t)
   N <- length(c)
@@ -399,7 +399,7 @@ kfeature_Likelihood <- function(t, y, c, gamma, pi, knots_shape, degree = 3,
     stop("The number columns in 'y' must match the length of 't'.")
   }
 
-  modelMean <- kfeature_meanWarp(t, c, phi, rho, tt_basis, gamma, pi, knots_shape, degree = degree, intercept = intercept)
+  modelMean <- kfeature_meanWarp(t, c, a, phi, rho, tt_basis, gamma, pi, knots_shape, degree = degree, intercept = intercept)
 
   if (N == 1){
     likelihood <- mvtnorm::dmvnorm(x = y, mean = modelMean, sigma = var_e * diag(n), log = log)

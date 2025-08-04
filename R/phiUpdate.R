@@ -385,7 +385,7 @@ phiUpdate_Reg_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
   return(metropolis)
 }
 
-kfeature_phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma, pi, knots_shape,
+kfeature_phiUpdate_NoReg <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, knots_shape,
                             degree = 3, intercept = F, var_e, var_phi, Upsilon,
                             tau, it_num, acceptance_sums) {
   n <- length(t)
@@ -428,14 +428,14 @@ kfeature_phiUpdate_NoReg <- function(t, y, c, phi, rho, tt_basis, gamma, pi, kno
     phi_new <- as.numeric(juppinv(eta_new))
 
     if (K > 1) {
-      modelMean_old <- kfeature_meanWarp(t, c[i], phi_old, rho, tt_basis, gamma, pi[i, ],
+      modelMean_old <- kfeature_meanWarp(t, c[i], a, phi_old, rho, tt_basis, gamma, pi[i, ],
                                          knots_shape, degree, intercept)
-      modelMean_new <- kfeature_meanWarp(t, c[i], phi_new, rho, tt_basis, gamma, pi[i, ],
+      modelMean_new <- kfeature_meanWarp(t, c[i], a, phi_new, rho, tt_basis, gamma, pi[i, ],
                                          knots_shape, degree, intercept)
     } else {
-      modelMean_old <- kfeature_meanWarp(t, c[i], phi_old, rho, tt_basis, gamma, pi[i],
+      modelMean_old <- kfeature_meanWarp(t, c[i], a, phi_old, rho, tt_basis, gamma, pi[i],
                                          knots_shape, degree, intercept)
-      modelMean_new <- kfeature_meanWarp(t, c[i], phi_new, rho, tt_basis, gamma, pi[i],
+      modelMean_new <- kfeature_meanWarp(t, c[i], a, phi_new, rho, tt_basis, gamma, pi[i],
                                          knots_shape, degree, intercept)
     }
 

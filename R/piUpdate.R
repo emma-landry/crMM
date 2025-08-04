@@ -284,8 +284,9 @@ piUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
   return(pi)
 }
 
-kfeature_piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma, pi, knots_shape, degree = 3,
-                          intercept = F, var_e, alpha, tuning_param = 1000) {
+kfeature_piUpdate_Warp <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, knots_shape, degree = 3,
+                          intercept = F, var_e, alpha, tuning_param = 1000, reg = 1, repulsive = T,
+                          temperature = 1) {
   n <- length(t)
   N <- length(c)
   K <- ncol(pi)
@@ -310,13 +311,15 @@ kfeature_piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma, pi, knots
     pi_new[pi_new < 1e-4] <- 1e-4
     pi_new <- pi_new / sum(pi_new)
 
-    modelMean_old <- kfeature_meanWarp(t, c[i], phi[i, ], rho, tt_basis, gamma, pi_old,
+    modelMean_old <- kfeature_meanWarp(t, c[i], a, phi[i, ], rho, tt_basis, gamma, pi_old,
                               knots_shape, degree, intercept)
-    modelMean_new <- kfeature_meanWarp(t, c[i], phi[i, ], rho, tt_basis, gamma, pi_new,
+    modelMean_new <- kfeature_meanWarp(t, c[i], a, phi[i, ], rho, tt_basis, gamma, pi_new,
                               knots_shape, degree, intercept)
     y_i <- y[i, ]
 
     P1 <- -1 / (2 * var_e) * sum((y_i - modelMean_new) ^ 2)
+    P1 <- P1 / temperature
+
     for (k in 1:K) {
       P1 <- P1 + (alpha[k] - 1) * log(pi_new[k])
     }
@@ -324,8 +327,20 @@ kfeature_piUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, gamma, pi, knots
     Q1 <- LaplacesDemon::ddirichlet(pi_new, alpha = tuning_param * pi_old, log = T)
 
     P0 <- -1 / (2 * var_e) * sum((y_i - modelMean_old) ^ 2)
+    P0 <- P0 / temperature
+
     for (k in 1:K) {
       P0 <- P0 + (alpha[k] - 1) * log(pi_old[k])
+    }
+    if (repulsive == T){
+      for (j in 1:N) {
+        if(j == i ){
+          next
+        } else {
+          P1 <- P1 - (reg / N) / sum((pi_new - pi[j, ])^2)
+          P0 <- P0 - (reg / N) / sum((pi_old - pi[j, ])^2)
+        }
+      }
     }
 
     Q0 <- LaplacesDemon::ddirichlet(pi_old, alpha = tuning_param * pi_new, log = T)

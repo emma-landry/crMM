@@ -182,19 +182,13 @@ gammaUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, pi, knots_shape, Omega,
   return(list(gamma[1:df], gamma[(df + 1):(2 * df)]))
 }
 
-kfeature_gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_shape, Omega,
+kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, knots_shape, Omega,
                              lambda, var_e, degree = 3, intercept = F) {
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
   df <- nrow(Omega)
   Q <- ncol(phi)
-
-  if (is.matrix(gamma)) {
-    K <- ncol(gamma)
-  } else {
-    K <- 1
-  }
 
   if (!is.null(rho)) {
     warp_num <- length(rho)
@@ -245,7 +239,7 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_sha
 
   if (K > 1) {
     preMean <- matrix(rep(0, K * df), nrow = K * df)
-    preCov <- matrix(rep(0, (K * df) ^ 2, nrow = K * df))
+    preCov <- matrix(rep(0, (K * df) ^ 2), nrow = K * df)
 
     for (i in 1:N) {
       phi_i <- phi[i, ]
@@ -253,7 +247,7 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_sha
         if (k == 1){
           tWarp <- tt_basis %*% phi_i
           shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
-          S_i <- pi[i, 1] * shape_basis
+          S_i <- a * pi[i, 1] * shape_basis
         } else {
           if (is.null(rho)){
             tWarp <- t
@@ -265,7 +259,7 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_sha
             }
           }
           shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
-          S_i <- cbind(S_i, pi[i, k] * shape_basis)
+          S_i <- cbind(S_i, a[k] * pi[i, k] * shape_basis)
         }
       }
       y_i <- matrix(y[i, ] - c[i], nrow = n)
@@ -281,9 +275,14 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, phi, rho, tt_basis, pi, knots_sha
     mean_gamma <- cov_gamma %*% preMean / var_e
 
     gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
+    gamma <- matrix(gamma, nrow = df, ncol = K)
 
-    for (k in 1:(K - 1)){
-      gamma[((k - 1) * df + 1):(k * df)] <- gamma[((k - 1) * df + 1):(k * df)] - mean(gamma[((k - 1) * df + 1):(k * df)])
+    # for (k in 1:(K - 1)) {
+    #   gamma[, k] <- gamma[, k] - mean(gamma[, k])
+    # }
+
+    for (k in 1:(K)) {
+      gamma[, k] <- gamma[, k] / sqrt(sum(gamma[, k]^2))
     }
 
   } else {
