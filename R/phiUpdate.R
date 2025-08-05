@@ -418,6 +418,7 @@ kfeature_phiUpdate_NoReg <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, 
   }
 
   for (i in 1:N) {
+
     phi_old <- phi[i, ]
     eta_old <- jupp(phi_old)
 

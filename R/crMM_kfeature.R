@@ -135,6 +135,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
       gamma <- matrix(nrow = df, ncol = K)
       for (k in 1:K) {
         gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% y_max
+        gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% (colMeans(y) + rnorm(n, 0, 0.1))
       }
     }
 
@@ -235,7 +236,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
 
     if (K > 1) {
       if (i <= burn_it) {
-        temperature_pi <- max(1, 1 + 5 * (1 - i / burn_it))  # cooling from 6 to 1
+        temperature_pi <- max(1, 1 + 5 * (1 - i / burn_it) ^ 0.5)
       } else {
         temperature_pi <- 1
       }
@@ -243,7 +244,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
       pi <- kfeature_piUpdate_Warp(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                                    gamma = gamma, pi = pi, knots_shape = knots_shape,
                                    degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                                   alpha = alpha, tuning_param = tuning_pi, repulsive = T,
+                                   alpha = alpha, tuning_param = tuning_pi, repulsive = T, reg = reg,
                                    temperature = temperature_pi)
     }
 
