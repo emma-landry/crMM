@@ -287,7 +287,7 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, kno
 
   } else {
     preMean <- matrix(rep(0, df), nrow = df)
-    preCov <- matrix(rep(0, df ^ 2, nrow = df))
+    preCov <- matrix(rep(0, df ^ 2), nrow = df)
 
     for (i in 1:N) {
       phi_i <- phi[i, ]
