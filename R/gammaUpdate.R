@@ -247,7 +247,7 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, kno
         if (k == 1){
           tWarp <- tt_basis %*% phi_i
           shape_basis <- splines::bs(x = tWarp, knots = knots_shape, degree = degree, intercept = intercept)
-          S_i <- a * pi[i, 1] * shape_basis
+          S_i <- a[k] * pi[i, 1] * shape_basis
         } else {
           if (is.null(rho)){
             tWarp <- t

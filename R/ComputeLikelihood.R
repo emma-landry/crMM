@@ -391,19 +391,23 @@ kfeature_Likelihood <- function(t, y, c, a, gamma, pi, knots_shape, degree = 3,
   n <- length(t)
   N <- length(c)
 
-  if (nrow(y) != N){
-    stop("The number of rows in 'y' must match the length of 'c'.")
+  if (N != 1) {
+    if (nrow(y) != N){
+      stop("The number of rows in 'y' must match the length of 'c'.")
+    }
+
+    if (ncol(y) != n) {
+      stop("The number columns in 'y' must match the length of 't'.")
+    }
   }
 
-  if (ncol(y) != n) {
-    stop("The number columns in 'y' must match the length of 't'.")
-  }
 
   modelMean <- kfeature_meanWarp(t, c, a, phi, rho, tt_basis, gamma, pi, knots_shape, degree = degree, intercept = intercept)
 
   if (N == 1){
     likelihood <- mvtnorm::dmvnorm(x = y, mean = modelMean, sigma = var_e * diag(n), log = log)
   } else {
+    likelihoods <- c()
     if (log == F){
       likelihood <- 1
       for (i in 1:N) {
@@ -415,10 +419,13 @@ kfeature_Likelihood <- function(t, y, c, a, gamma, pi, knots_shape, degree = 3,
       for (i in 1:N) {
         likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean[i, ], sigma = var_e * diag(n), log = log)
         likelihood <- likelihood + likelihood_i
+
+        likelihoods <- c(likelihoods, likelihood_i)
       }
     }
   }
-  return(likelihood)
+  return(list(likelihood = likelihood,
+              likelihoods = likelihoods))
 }
 
 

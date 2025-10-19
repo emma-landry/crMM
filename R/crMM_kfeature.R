@@ -63,7 +63,7 @@
 #'
 crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
                       K, warp_num, rho_init = rep(0.5, warp_num), h, degree_tt = 3, intercept_tt = FALSE,
-                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, reg = 1,
+                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, reg = 1, common_a = T,
                       tuning_pi = 1000, alpha, gamma_init = NULL, lambda_init = rep(0.1, K),
                       var_c_init = 0.1, var_e_init = 1, var_phi_init = 1, repulsive_pi = T,
                       process_id = NULL) {
@@ -135,7 +135,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
       gamma <- matrix(nrow = df, ncol = K)
       for (k in 1:K) {
         gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% y_max
-        gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% (colMeans(y) + rnorm(n, 0, 0.1))
+        gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% (colMeans(y) + stats::rnorm(n, 0, 0.1))
       }
     }
 
@@ -191,13 +191,14 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
   register_mat <- matrix(nrow = num_it, ncol = N * n, data = NA)
   tt_mat       <- matrix(nrow = num_it, ncol = N * n, data = NA)
   loglik       <- matrix(nrow = num_it, ncol = 1, data = NA)
+  loglik_i     <- matrix(nrow = num_it, ncol = N, data = NA)
   current_fit  <- matrix(0, nrow = N, ncol = n)
   register_fit <- matrix(0, nrow = N, ncol = n)
   fit          <- matrix(0, nrow = N, ncol = n)
   fit2         <- matrix(0, nrow = N, ncol = n)
 
   if (warp_num > 0) {
-    rho_mat <- matrix(nrow = num_it, ncol = 1, data = NA)
+    rho_mat <- matrix(nrow = num_it, ncol = warp_num, data = NA)
 
     tt_mats <- vector("list", warp_num)
     for (w in 1:warp_num) {
@@ -236,7 +237,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
 
     a <- kfeature_aUpdate(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                  gamma = gamma, pi = pi, knots_shape = knots_shape, degree = degree_shape,
-                  intercept = intercept_shape, var_e = var_e, common_a = T)
+                  intercept = intercept_shape, var_e = var_e, common_a = common_a)
 
     if (K > 1) {
       if (i <= burn_it) {
@@ -317,11 +318,11 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
               if (k == 1){
                 shape_basis_k <- splines::bs(x = tWarp, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a[k] * pi[j, k] * shape_basis_k %*% gamma[, k]
               } else {
                 shape_basis_k <- splines::bs(x = t, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a[k] * pi[j, k] * shape_basis_k %*% gamma[, k]
               }
             }
 
@@ -340,11 +341,11 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                 tt_mats[[k - 1]][indexing, ] <- tWarp
                 shape_basis_k <- splines::bs(x = tWarp, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a[k] * pi[j, k] * shape_basis_k %*% gamma[, k]
               } else {
                 shape_basis_k <- splines::bs(x = t, knots = knots_shape,
                                            degree = degree_shape, intercept = intercept_shape)
-                current_fit[j, ] <- current_fit[j, ] + a * pi[j, k] * shape_basis_k %*% gamma[, k]
+                current_fit[j, ] <- current_fit[j, ] + a[k] * pi[j, k] * shape_basis_k %*% gamma[, k]
               }
             }
           }
@@ -355,7 +356,7 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
         } else {
           register_fit[j, ] <- c[j]
           for (k in 1:K){
-            register_fit[j, ] <- register_fit[j, ] + a * pi[j, k] * shape_basis %*% gamma[, k]
+            register_fit[j, ] <- register_fit[j, ] + a[k] * pi[j, k] * shape_basis %*% gamma[, k]
           }
         }
 
@@ -373,8 +374,12 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                                   degree = 3, var_e = var_e, phi = phi, tt_basis = tt_basis,
                                   rho = rho, intercept = T, log = T)
 
-      loglik[indexing, ] <- loglikelihood
+      loglik[indexing, ] <- loglikelihood$likelihood
+      loglik_i[indexing, ] <- loglikelihood$likelihoods
 
+      for (i in 1:N){
+
+      }
   }
   }
 
@@ -392,7 +397,8 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                             stochastic_time_rho = tt_mats,
                             fit = fit,
                             fit2 = fit2,
-                            loglik = loglik)
+                            loglik = loglik,
+                            loglik_i = loglik_i)
   } else {
     final <- construct_crMM(gamma = gamma_mats,
                             c = c_mat,
@@ -405,7 +411,8 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                             stochastic_time = tt_mat,
                             fit = fit,
                             fit2 = fit2,
-                            loglik = loglik)
+                            loglik = loglik,
+                            loglik_i = loglik_i)
   }
   return(final)
 }

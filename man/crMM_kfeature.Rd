@@ -26,6 +26,7 @@ crMM_kfeature(
   b_l,
   a_phi,
   b_phi,
+  reg = 1,
   tuning_pi = 1000,
   alpha,
   gamma_init = NULL,
@@ -33,6 +34,7 @@ crMM_kfeature(
   var_c_init = 0.1,
   var_e_init = 1,
   var_phi_init = 1,
+  repulsive_pi = T,
   process_id = NULL
 )
 }
