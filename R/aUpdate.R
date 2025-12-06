@@ -2,7 +2,7 @@ kfeature_aUpdate <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, knots_sh
                              intercept = F, var_e, common_a = F) {
   n <- length(t)
   N <- length(c)
-  K <- ncol(pi)
+  K <- if (is.null(ncol(pi))) 1 else ncol(pi)
 
   a_old <- a
 

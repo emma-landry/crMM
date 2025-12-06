@@ -306,6 +306,10 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, kno
     gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
   }
 
+  if (K == 1){
+    gamma <- t(gamma)
+  }
+
   return(gamma)
 }
 
