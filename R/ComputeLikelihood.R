@@ -406,6 +406,7 @@ kfeature_Likelihood <- function(t, y, c, a, gamma, pi, knots_shape, degree = 3,
 
   if (N == 1){
     likelihood <- mvtnorm::dmvnorm(x = y, mean = modelMean, sigma = var_e * diag(n), log = log)
+    likelihoods <- likelihood
   } else {
     likelihoods <- c()
     if (log == F){
@@ -413,6 +414,7 @@ kfeature_Likelihood <- function(t, y, c, a, gamma, pi, knots_shape, degree = 3,
       for (i in 1:N) {
         likelihood_i <-mvtnorm::dmvnorm(x = y[i, ], mean = modelMean[i, ], sigma = var_e * diag(n), log = log)
         likelihood <- likelihood  * likelihood_i
+        likelihoods <- c(likelihoods, likelihood_i)
       }
     } else {
       likelihood <- 0

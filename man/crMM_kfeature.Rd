@@ -26,6 +26,8 @@ crMM_kfeature(
   b_l,
   a_phi,
   b_phi,
+  common_a = T,
+  repulsive_pi = T,
   reg = 1,
   tuning_pi = 1000,
   alpha,
@@ -34,7 +36,6 @@ crMM_kfeature(
   var_c_init = 0.1,
   var_e_init = 1,
   var_phi_init = 1,
-  repulsive_pi = T,
   process_id = NULL
 )
 }
@@ -59,7 +60,17 @@ The default is \code{3} for cubic splines.}
 \item{intercept_shape}{If \code{TRUE} an intercept is included in the B-spline basis for the common
 shape functions. The default is \code{FALSE}.}
 
-\item{rho_init}{Initial value for the time-transformation rescaling parameter. Default is \code{0.5}.}
+\item{K}{The number of latent features assumed by the model.}
+
+\item{warp_num}{The model assumes that the first feature is warped. \code{warp_num} specifies the number
+of additional features that are warped, hence it can take a value between \code{0} and \code{K - 1}. \code{0} means
+only the first feature is warped, and \code{K - 1} implies all are warped. Differential warping is assumed,
+that is the level of warping of each features relative to the reference one is scaled. In practice, this
+may be overly restrictive, and setting \code{warp_num} to \code{NULL} indicates that all \code{K} features are warped
+by the same function (no \code{rho} parameters are estimated).}
+
+\item{rho_init}{Initial value for the time-transformation rescaling parameters allowing for differential
+warping of the \code{warp_num} extra features. Default is \code{rep(0.5, warp_num)}.}
 
 \item{h}{The number of inner knots used to define the B-splines for the time-transformation functions.
 The sampler assumes equally spaced knots between the first and last value of \code{t}.}
@@ -74,36 +85,43 @@ functions. The default is \code{FALSE}.}
 
 \item{b_e, b_c, b_l, b_phi}{Rate parameters of the Inverse Gamma priors.}
 
+\item{common_a}{The \code{K} shape functions are learned as having normalized amplitude. If \code{TRUE}, the amplitude
+parameter is assumed equal across all shapes. If \code{FALSE}, a different amplitude parameter can be obtained for each feature.
+Default is \code{TRUE}.}
+
+\item{repulsive_pi}{If \code{TRUE}, a repulsive prior is assumed for the mixed membership coefficients.
+Default is \code{TRUE}.}
+
+\item{reg}{Hyperparameter for the repulsive prior. Default is \code{1}.}
+
 \item{tuning_pi}{Scaling for the shape parameter of the Metropolis proposal Dirichlet distribution
 for sampling of pi. Default is \code{1000}.}
 
 \item{alpha}{Shape parameter for the Dirichlet prior for pi.}
 
-\item{process_id}{If provided, gives an ID to the iteration for parallel processing. Default is \code{NULL}.}
+\item{gamma_init}{Initial value of the B-spline coefficients, where each column corresponds to the coefficients for one
+feature. Default is \code{NULL}, in which case the initial values are determined automatically based on provided data.}
 
-\item{inc_rho}{If \code{TRUE}, a parameter that rescales the time transformation functions for the second
-feature towards the identity. Default is \code{TRUE}.}
+\item{lambda_init}{Initial values for the prior variance of each of the spline coefficients. Default is
+\code{rep(0.1, K)}.}
 
-\item{lambda1_init, lambda2_init, var_c_init, var_e_init, var_phi_init}{Initial values for prior variances.
-Default is \code{0.1}, except for \code{var_e_init} and \code{var_phi_init} which is \code{1}.}
-}
-\value{
-A list with the following items:
+\item{var_c_init, var_e_init, var_phi_init}{Initial values for prior variances.
+Default is \code{0.1} for \code{var_c_init}, and \code{1} for \code{var_e_init} and \code{var_phi_init}.
+
+@returns An object of class \code{crMM_Obj}, consisting of a list with the following items:
 \itemize{
-\item \code{gamma1}: a matrix with \code{num_it} rows of the posterior samples for the B-spline coefficient
-for the shape associated with the first feature.
-\item \code{gamma2}: a matrix with \code{num_it} rows of the posterior samples for the B-spline coefficient
-for the shape associated with the second feature.
+\item \code{gamma}: a list containing \code{K} matrices of with \code{num_it} rows of the posterior samples for the
+B-spline coefficients associated with each feature.
 \item \code{c}: a matrix with \code{num_it} rows of the posterior samples for the individual intercepts. The number
 of columns corresponds to the number of subjects, that is, \code{nrow(y)}.
 \item \code{variance}: a matrix with \code{num_it} rows of the posterior samples for the variance parameters.
-The five columns, in order, correspond to the variances for the first and second feature B-spline
-coefficients, the intercepts, the error term, and the time-transformation spline coefficients.
+The \code{K + 3} columns, in order, correspond to the variances for the B-spline coefficients,
+the intercepts, the error term, and the time-transformation spline coefficients.
 \item \code{phi}: a matrix with \code{num_it} rows of the posterior samples for the B-spline coefficients for the
 individual time-transformation functions. The coefficients across individuals are stacked in order into
 one vector corresponding to a row at each iteration.
-\item \code{pi1}: a matrix with \code{num_it}rows of the posterior samples of the mixed membership component for the
-first feature. The number of columns corresponds to the number of subjects, that is,
+\item \code{pi}: a list containing \code{K} matrices with \code{num_it} rows of the mixed membership component for each
+of the features. The number of columns corresponds to the number of subjects, that is,
 the number of rows in \code{y}.
 \item \code{fit_sample}: matrix with \code{num_it} rows of the posterior samples of individual fits. The first
 \code{length(t)} columns give the fit for the first observation, the second \code{length(t)} columns give
@@ -116,20 +134,21 @@ the fit for the second observation, and so on for all the data.
 \code{length(t)} columns give the times for the second observation, and so on for all the data.
 \item \code{fit1}, \code{fit2}: matrices with \code{nrow(y)} rows corresponding to the ergodic first and second
 sample moment of the fit at points \code{t} for each of the observations.
+\item \code{loglik} : vector with \code{num_it} rows of the full model loglikelihood at each iteration.
+\item \code{loglik_i} : matrix with \code{num_it} rows and \code{nrow(y)} columns of the individual loglikelihood of each observation.
 }
 
-Additionally, if \code{wantPAF} is \code{TRUE} then the list also includes a matrix with \code{num_it} rows of the
-posterior samples of the Peak Alpha Frequency.
+Additionally, if \code{warp_num} is >0, the list includes a matrix \code{rho} with \code{num_it} rows and \code{warp_num} columns
+of the posterior samples for the time-transformation rescaling parameter.
+\code{stochastic_time_rho} is then a list of \code{warp_num} matrices with \code{num_it} rows of the posterior samples
+of the individual stochastic (aligned) time for the scaled additional features.
+The first \code{length(t)} columns give the times for the first observation, the second
+\code{length(t)} columns give the times for the second observation, and so on for all the data.}
 
-Also, if \code{inc_rho} is \code{TRUE}, the list includes a matrix with \code{num_it} rows of the posterior samples
-for the time-transformation rescaling parameter. Also, \code{stochastic_time2}, a matrix with \code{num_it} rows
-of the posterior samples of the individual stochastic (aligned) time for the scaled second feature is
-provided. The first \code{length(t)} columns give the times for the first observation, the second
-\code{length(t)} columns give the times for the second observation, and so on for all the data.
+\item{process_id}{If provided, gives an ID to the iteration for parallel processing. Default is \code{NULL}.}
 }
 \description{
-\code{crMM_Warp()} runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two
+\code{crMM_kfeature()} runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the K-
 feature mixed membership model assumption. This function incorporates curve registration to account for
-phase variation. See \code{\link[=crMM_WarpReg]{crMM_WarpReg()}} for a sampler that adds covariate information in the estimation
-of time-transformation functions through linear regression.
+phase variation.
 }

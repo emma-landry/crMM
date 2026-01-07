@@ -94,29 +94,9 @@ at least one observation belongs entirely to each cluster. Default is \code{TRUE
 
 \item{V0}{Prior row covariance matrix for the regression coefficient.}
 
-\item{B_init}{Initial value for the regression coefficient. Default is \code{B0}.}
+\item{B_init}{Initial value for the regression coefficient. Default is \code{B0}.
 
-\item{tuning_pi}{Scaling for the shape parameter of the Metropolis proposal Dirichlet distribution
-for sampling of pi. Default is \code{1000}.}
-
-\item{alpha}{Shape parameter for the Dirichlet prior for pi.}
-
-\item{label1, label2}{Vector containing the indices of observations labelled as belonging to
-feature 1 and feature 2 respectively. Default is \code{NULL}, in which case observations are not labelled.}
-
-\item{wantPAF}{If \code{TRUE}, the sampler records the PAF value at each iteration (only relevant for
-the EEG case study). Default is \code{FALSE}.}
-
-\item{gamma1_init, gamma2_init}{Initial value the B-spline coefficients for the common shape functions.
-Default is \code{NULL}, in which case the sampler obtains coefficients based on the extreme observations.}
-
-\item{lambda1_init, lambda2_init, var_c_init, var_e_init, var_phi_init}{Initial values for prior variances.
-Default is \code{0.1}, except for \code{var_e_init} and \code{var_phi_init} which is \code{1}.}
-
-\item{process_id}{If provided, gives an ID to the iteration for parallel processing. Default is \code{NULL}.}
-}
-\value{
-A list with the following items:
+@returns An object of class \code{crMM_Obj}, consisting of a list with the following items:
 \itemize{
 \item \code{gamma1}: a matrix with \code{num_it} rows of the posterior samples for the B-spline coefficient
 for the shape associated with the first feature.
@@ -147,16 +127,36 @@ the fit for the second observation, and so on for all the data.
 \code{length(t)} columns give the times for the second observation, and so on for all the data.
 \item \code{fit1}, \code{fit2}: matrices with \code{nrow(y)} rows corresponding to the ergodic first and second
 sample moment of the fit at points \code{t} for each of the observations.
+\item \code{loglik} : vector with \code{num_it} rows of the full model loglikelihood at each iteration.
 }
 
-Additionally, if \code{wantPAF} is \code{TRUE} then the list also includes a matrix with \code{num_it} rows of the
+Additionally, if \code{wantPAF} is \code{TRUE} then the list also includes a matrix \code{PAF} with \code{num_it} rows of the
 posterior samples of the Peak Alpha Frequency.
 
-Also, if \code{inc_rho} is \code{TRUE}, the list includes a matrix with \code{num_it} rows of the posterior samples
+Also, if \code{inc_rho} is \code{TRUE}, the list includes a matrix \code{rho} with \code{num_it} rows of the posterior samples
 for the time-transformation rescaling parameter. Also, \code{stochastic_time2}, a matrix with \code{num_it} rows
 of the posterior samples of the individual stochastic (aligned) time for the scaled second feature is
 provided. The first \code{length(t)} columns give the times for the first observation, the second
-\code{length(t)} columns give the times for the second observation, and so on for all the data.
+\code{length(t)} columns give the times for the second observation, and so on for all the data.}
+
+\item{tuning_pi}{Scaling for the shape parameter of the Metropolis proposal Dirichlet distribution
+for sampling of pi. Default is \code{1000}.}
+
+\item{alpha}{Shape parameter for the Dirichlet prior for pi.}
+
+\item{label1, label2}{Vector containing the indices of observations labelled as belonging to
+feature 1 and feature 2 respectively. Default is \code{NULL}, in which case observations are not labelled.}
+
+\item{wantPAF}{If \code{TRUE}, the sampler records the PAF value at each iteration (only relevant for
+the EEG case study). Default is \code{FALSE}.}
+
+\item{gamma1_init, gamma2_init}{Initial value the B-spline coefficients for the common shape functions.
+Default is \code{NULL}, in which case the sampler obtains coefficients based on the extreme observations.}
+
+\item{lambda1_init, lambda2_init, var_c_init, var_e_init, var_phi_init}{Initial values for prior variances.
+Default is \code{0.1}, except for \code{var_e_init} and \code{var_phi_init} which is \code{1}.}
+
+\item{process_id}{If provided, gives an ID to the iteration for parallel processing. Default is \code{NULL}.}
 }
 \description{
 \code{crMM_WarpReg()} runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two-feature

@@ -60,4 +60,6 @@ feature, the posterior summary is given for the individual time-transformation B
 the individual time-transformation functions, and the stochastic time points. When rescaling for the second feature,
 posterior summaries of the rescaling parameter, as well as the time-transformation functions and stochastic time
 points associated with feature 2 are also computed.
+Note that this function is designed for two-feature mixed membership models with optional time-transformation
+rescaling of the second feature, as used in the EEG case study (it does not generalize to K features).
 }

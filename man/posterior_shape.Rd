@@ -35,14 +35,14 @@ shape functions. The default is \code{FALSE}.}
 \value{
 A list containing a list for each of the inputted moments, that consists of:
 \itemize{
-\item \code{gamma1} : the posterior summary of the sample for the B-spline coefficient associated with feature 1.
-\item \code{gamma2} : the posterior summary of the sample for the B-spline coefficient associated with feature 2.
-\item \code{f1} : the evaluated function associated with feature 1 using the estimate \code{gamma1}.
-\item \code{f2} : the evaluated function associated with feature 1 using the estimate \code{gamma2}.
+\item \code{gamma} : a list of \code{K} elements containing the posterior summaries of the samples for
+the B-spline coefficient associated with each of the \code{K} features.
+\item \code{f} : a list containing the evaluated functions associated with each features using the
+estimate from \code{gamma}.
 }
 }
 \description{
 \code{posterior_shape()} obtains posterior summaries for the shape functions. It calculates the desired summary
-statistic/ moments of the posterior MCMC samples for the B-spline coefficients of the two features,
+statistic/ moments of the posterior MCMC samples for the B-spline coefficients of the K features,
 and fits the associated posterior function.
 }

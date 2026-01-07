@@ -1,15 +1,20 @@
 #' MCMC sampler for curve registration for functional mixed membership models
 #'
 #' @description
-#' `crMM_Warp()` runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the two
+#' `crMM_kfeature()` runs a Metropolis-within-Gibbs sampler for the analysis of functional data under the K-
 #' feature mixed membership model assumption. This function incorporates curve registration to account for
-#' phase variation. See [crMM_WarpReg()] for a sampler that adds covariate information in the estimation
-#' of time-transformation functions through linear regression.
+#' phase variation.
 #'
 #' @inheritParams crMM_NoWarp
-#' @param inc_rho If `TRUE`, a parameter that rescales the time transformation functions for the second
-#' feature towards the identity. Default is `TRUE`.
-#' @param rho_init Initial value for the time-transformation rescaling parameter. Default is `0.5`.
+#' @param K The number of latent features assumed by the model.
+#' @param warp_num The model assumes that the first feature is warped. `warp_num` specifies the number
+#' of additional features that are warped, hence it can take a value between `0` and `K - 1`. `0` means
+#' only the first feature is warped, and `K - 1` implies all are warped. Differential warping is assumed,
+#' that is the level of warping of each features relative to the reference one is scaled. In practice, this
+#' may be overly restrictive, and setting `warp_num` to `NULL` indicates that all `K` features are warped
+#' by the same function (no `rho` parameters are estimated).
+#' @param rho_init Initial value for the time-transformation rescaling parameters allowing for differential
+#' warping of the `warp_num` extra features. Default is `rep(0.5, warp_num)`.
 #' @param h The number of inner knots used to define the B-splines for the time-transformation functions.
 #' The sampler assumes equally spaced knots between the first and last value of `t`.
 #' @param degree_tt Degree of the piecewise polynomial of B-splines for the time-transformation functions.
@@ -18,54 +23,63 @@
 #'functions. The default is `FALSE`.
 #' @param a_e,a_c,a_l,a_phi Shape parameters of the Inverse Gamma priors.
 #' @param b_e,b_c,b_l,b_phi Rate parameters of the Inverse Gamma priors.
-#' @param lambda1_init,lambda2_init,var_c_init,var_e_init,var_phi_init Initial values for prior variances.
-#' Default is `0.1`, except for `var_e_init` and `var_phi_init` which is `1`.
+#' @param common_a The `K` shape functions are learned as having normalized amplitude. If `TRUE`, the amplitude
+#' parameter is assumed equal across all shapes. If `FALSE`, a different amplitude parameter can be obtained for each feature.
+#' Default is `TRUE`.
+#' @param repulsive_pi If `TRUE`, a repulsive prior is assumed for the mixed membership coefficients.
+#' Default is `TRUE`.
+#' @param reg Hyperparameter for the repulsive prior. Default is `1`.
+#' @param gamma_init Initial value of the B-spline coefficients, where each column corresponds to the coefficients for one
+#' feature. Default is `NULL`, in which case the initial values are determined automatically based on provided data.
+#' @param lambda_init Initial values for the prior variance of each of the spline coefficients. Default is
+#' `rep(0.1, K)`.
+#' @param var_c_init,var_e_init,var_phi_init Initial values for prior variances.
+#' Default is `0.1` for `var_c_init`, and `1` for `var_e_init` and `var_phi_init`.
 #'
-#' @return A list with the following items:
+#'  @returns An object of class `crMM_Obj`, consisting of a list with the following items:
 #'
-#' * `gamma1`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
-#' for the shape associated with the first feature.
-#' * `gamma2`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
-#' for the shape associated with the second feature.
+#' * `gamma`: a list containing `K` matrices of with `num_it` rows of the posterior samples for the
+#' B-spline coefficients associated with each feature.
 #' * `c`: a matrix with `num_it` rows of the posterior samples for the individual intercepts. The number
 #' of columns corresponds to the number of subjects, that is, `nrow(y)`.
 #' * `variance`: a matrix with `num_it` rows of the posterior samples for the variance parameters.
-#' The five columns, in order, correspond to the variances for the first and second feature B-spline
-#' coefficients, the intercepts, the error term, and the time-transformation spline coefficients.
+#' The `K + 3` columns, in order, correspond to the variances for the B-spline coefficients,
+#' the intercepts, the error term, and the time-transformation spline coefficients.
 #' * `phi`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficients for the
 #' individual time-transformation functions. The coefficients across individuals are stacked in order into
 #' one vector corresponding to a row at each iteration.
-#' * `pi1`: a matrix with `num_it`rows of the posterior samples of the mixed membership component for the
-#' first feature. The number of columns corresponds to the number of subjects, that is,
+#' * `pi`: a list containing `K` matrices with `num_it` rows of the mixed membership component for each
+#' of the features. The number of columns corresponds to the number of subjects, that is,
 #' the number of rows in `y`.
 #' * `fit_sample`: matrix with `num_it` rows of the posterior samples of individual fits. The first
-#'  `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
-#'   the fit for the second observation, and so on for all the data.
+#' `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
+#' the fit for the second observation, and so on for all the data.
 #' * `registered_fit`: matrix with `num_it` rows of the posterior samples of individual aligned fits. The first
-#'  `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
-#'   the fit for the second observation, and so on for all the data.
+#' `length(t)` columns give the fit for the first observation, the second `length(t)` columns give
+#' the fit for the second observation, and so on for all the data.
 #' * `stochastic_time`: matrix with `num_it` rows of the posterior samples of the individual stochastic
 #' (aligned) time. The first `length(t)` columns give the times for the first observation, the second
 #' `length(t)` columns give the times for the second observation, and so on for all the data.
 #' * `fit1`, `fit2`: matrices with `nrow(y)` rows corresponding to the ergodic first and second
 #' sample moment of the fit at points `t` for each of the observations.
+#' * `loglik` : vector with `num_it` rows of the full model loglikelihood at each iteration.
+#' * `loglik_i` : matrix with `num_it` rows and `nrow(y)` columns of the individual loglikelihood of each observation.
 #'
-#' Additionally, if `wantPAF` is `TRUE` then the list also includes a matrix with `num_it` rows of the
-#' posterior samples of the Peak Alpha Frequency.
 #'
-#' Also, if `inc_rho` is `TRUE`, the list includes a matrix with `num_it` rows of the posterior samples
-#' for the time-transformation rescaling parameter. Also, `stochastic_time2`, a matrix with `num_it` rows
-#' of the posterior samples of the individual stochastic (aligned) time for the scaled second feature is
-#' provided. The first `length(t)` columns give the times for the first observation, the second
+#' Additionally, if `warp_num` is >0, the list includes a matrix `rho` with `num_it` rows and `warp_num` columns
+#' of the posterior samples for the time-transformation rescaling parameter.
+#' `stochastic_time_rho` is then a list of `warp_num` matrices with `num_it` rows of the posterior samples
+#' of the individual stochastic (aligned) time for the scaled additional features.
+#' The first `length(t)` columns give the times for the first observation, the second
 #' `length(t)` columns give the times for the second observation, and so on for all the data.
 #'
 #' @export
 #'
 crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, intercept_shape = FALSE,
                       K, warp_num, rho_init = rep(0.5, warp_num), h, degree_tt = 3, intercept_tt = FALSE,
-                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, reg = 1, common_a = T,
+                      a_e, b_e, a_c, b_c, a_l, b_l, a_phi, b_phi, common_a = T, repulsive_pi = T, reg = 1,
                       tuning_pi = 1000, alpha, gamma_init = NULL, lambda_init = rep(0.1, K),
-                      var_c_init = 0.1, var_e_init = 1, var_phi_init = 1, repulsive_pi = T,
+                      var_c_init = 0.1, var_e_init = 1, var_phi_init = 1,
                       process_id = NULL) {
 
   # Lengths ---------------------------------------------------------
@@ -81,6 +95,9 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
     stop("The number columns in 'y' must match the length of 't'.")
   }
 
+  if (!is.null(warp_num) && warp_num > (K - 1)) {
+    stop("`warp_num` must be between 0 and K - 1.")
+  }
 
   if (is.null(warp_num)) {
     rho_init <- rep(1, K - 1)
@@ -88,6 +105,14 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
   } else if (warp_num == 0) {
     rho_init <- NULL
   } else {
+    if (length(rho_init) != warp_num) {
+      stop(
+        sprintf(
+          "`rho_init` must have length %d (equal to `warp_num`).",
+          warp_num
+        )
+      )
+    }
     if (any(rho_init < 0 | rho_init > 1)) {
       rho_init[rho_init < 0 | rho_init > 1] <- 0.5
       warning("All entries of `rho_init` must be between 0 and 1. Invalid entries have been set to the default, 0.5.")
@@ -134,7 +159,6 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
     } else {
       gamma <- matrix(nrow = df, ncol = K)
       for (k in 1:K) {
-        gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% y_max
         gamma[, k] <-  MASS::ginv(t(shape_basis) %*% shape_basis + Omega / lambda[k]) %*% t(shape_basis) %*% (colMeans(y) + stats::rnorm(n, 0, 0.1))
       }
     }
@@ -374,15 +398,11 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
 
       loglikelihood <- kfeature_Likelihood(t = t, y = y, c = c, a = a, gamma= gamma,
                                   pi = pi,knots_shape = knots_shape,
-                                  degree = 3, var_e = var_e, phi = phi, tt_basis = tt_basis,
+                                  degree = degree_shape, var_e = var_e, phi = phi, tt_basis = tt_basis,
                                   rho = rho, intercept = T, log = T)
 
       loglik[indexing, ] <- loglikelihood$likelihood
       loglik_i[indexing, ] <- loglikelihood$likelihoods
-
-      for (i in 1:N){
-
-      }
   }
   }
 

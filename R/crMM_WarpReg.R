@@ -14,8 +14,7 @@
 #' @param V0 Prior row covariance matrix for the regression coefficient.
 #' @param B_init Initial value for the regression coefficient. Default is `B0`.
 #'
-#' @return
-#' A list with the following items:
+#'  @returns An object of class `crMM_Obj`, consisting of a list with the following items:
 #'
 #' * `gamma1`: a matrix with `num_it` rows of the posterior samples for the B-spline coefficient
 #' for the shape associated with the first feature.
@@ -46,11 +45,12 @@
 #' `length(t)` columns give the times for the second observation, and so on for all the data.
 #' * `fit1`, `fit2`: matrices with `nrow(y)` rows corresponding to the ergodic first and second
 #' sample moment of the fit at points `t` for each of the observations.
+#' * `loglik` : vector with `num_it` rows of the full model loglikelihood at each iteration.
 #'
-#' Additionally, if `wantPAF` is `TRUE` then the list also includes a matrix with `num_it` rows of the
+#' Additionally, if `wantPAF` is `TRUE` then the list also includes a matrix `PAF` with `num_it` rows of the
 #' posterior samples of the Peak Alpha Frequency.
 #'
-#' Also, if `inc_rho` is `TRUE`, the list includes a matrix with `num_it` rows of the posterior samples
+#' Also, if `inc_rho` is `TRUE`, the list includes a matrix `rho` with `num_it` rows of the posterior samples
 #' for the time-transformation rescaling parameter. Also, `stochastic_time2`, a matrix with `num_it` rows
 #' of the posterior samples of the individual stochastic (aligned) time for the scaled second feature is
 #' provided. The first `length(t)` columns give the times for the first observation, the second
@@ -337,7 +337,7 @@ crMM_WarpReg <- function(num_it, burnin = 0.2, t, y, X, p, degree_shape = 3, int
 
       loglikelihood <- Likelihood(t = t, y = y, c = c, gamma1 = gamma1, gamma2 = gamma2,
                                   pi = pi, shape_basis = shape_basis, knots_shape = knots_shape,
-                                  degree = 3, var_e = var_e, phi = phi, tt_basis = tt_basis,
+                                  degree = degree_shape, var_e = var_e, phi = phi, tt_basis = tt_basis,
                                   rho = rho, intercept = T, log = T)
       loglik[indexing, ] <- loglikelihood
     }

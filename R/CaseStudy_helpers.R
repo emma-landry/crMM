@@ -1,3 +1,152 @@
+# Case-study-specific helper functions used in the EEG application.
+# These functions rely on model components or assumptions that do not
+# generalize to arbitrary K-feature mixed membership models.
+
+#' Posterior estimates for the time-transformation regression parameter
+#'
+#' @description
+#' `posterior_regression()` obtains the posterior summary statistics for the time-transformation regression
+#' parameter. It calculates the desired summary statistics / moments of the posterior MCMC samples for the
+#' regression parameter. If the sample provided considers the analysis of the EEG case study, the
+#' mean time-transformation functions associated with inputted ages, and stratified by clinical designation,
+#' are also fitted.
+#'
+#'
+#' @param crMM_samples An object of class `crMM_Obj`.
+#' @param moment Posterior moment of interest. Options are: `"mean"`, `"median"`, `"sd"` or values
+#' between 0 and 1 for quantiles. The default is `"mean"`.
+#' @param h The number of inner knots used to define the B-spline for the time-transformation functions.
+#' @param degree Degree of the piecewise cubic polynomial of B-splines for the time-transformation
+#' functions. The default is `3` for cubic splines.
+#' @param intercept If `TRUE`, an intercept is included in the B-spline basis for the time-transformation
+#' functions. The default is `FALSE`.
+#' @param t_boundary A vector with the first and last observation time point. Default is `c(0,1)`.
+#' @param eval_points When `CaseStudy = TRUE`, number of points at which to evaluate the time-transformation
+#' functions using B-spines. Default is `100`.
+#' @param CaseStudy Logical that indicates whether the sample consists of the analysis of the EEG case study.
+#' The default is `FALSE`.
+#' @param ages When `CaseStudy = TRUE`, the age values at which to evaluate the regression mean for the
+#' time-transformation functions. Default is `NULL`, for the general case.
+#'
+#' @return
+#' When `CaseStudy = FALSE`, returns the posterior sample summary for the regression coefficient.
+#'
+#' When `CaseStudy = TRUE`, returns a list containing:
+#'
+#' * `B`: the posterior sample summary of the regression coefficient
+#' * `means0`: a matrix with the regression mean function evaluated at different ages, for TD individuals
+#' * `means1`: a matrix with the regression mean function evaluated at different ages, for ASD individuals
+#'
+#' @export
+#'
+posterior_regression <- function(crMM_samples,  moment = "mean", h, degree = 3, intercept = FALSE,
+                                 CaseStudy = FALSE, ages = NULL, t_boundary = c(0, 1), eval_points = 100) {
+
+  if (!inherits(crMM_samples, "crMM_Obj")) {
+    stop("'crMM_samples' must be an object of class 'crMM_Obj'.")
+  }
+
+  if (intercept == FALSE) {
+    df <- h + degree
+  } else {
+    df <- h + degree + 1
+  }
+
+  if (CaseStudy == FALSE) {
+    l <- ncol(crMM_samples$B) / (df - 2)
+
+    if (round(l) != l) {
+      stop("The provided B-spline parameters do not match the dimensions implied by the regression
+           coefficient.")
+    }
+
+    if (typeof(moment) == "character") {
+      if (moment == "mean") {
+        B <- apply(crMM_samples$B, 2, mean)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "median") {
+        B <- apply(crMM_samples$B, 2, stats::median)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "sd") {
+        B <- apply(crMM_samples$B, 2, stats::sd)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    } else {
+      if (moment >= 0 & moment <= 1) {
+        B <- apply(crMM_samples$B, 2, stats::quantile, probs = moment)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    }
+    return(B)
+  } else {
+    l <- 3
+
+    if (ncol(crMM_samples$B) != l * (df - 2)) {
+      stop("The provided B-spline parameters do not match the dimensions implied by the regression
+           coefficient.")
+    }
+
+    if (is.null(ages)) {
+      stop("'ages' needs to be provided for case study analysis.")
+    }
+
+    if (typeof(moment) == "character") {
+      if (moment == "mean") {
+        B <- apply(crMM_samples$B, 2, mean)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "median") {
+        B <- apply(crMM_samples$B, 2, stats::median)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else if (moment == "sd") {
+        B <- apply(crMM_samples$B, 2, stats::sd)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    } else {
+      if (moment >= 0 & moment <= 1) {
+        B <- apply(crMM_samples$B, 2, stats::quantile, probs = moment)
+        B <- matrix(B, nrow = l, ncol = df - 2, byrow = F)
+      } else {
+        stop(paste(moment, " is not a valid value for the moment. The posterior summary cannot be
+                    calculated for it."))
+      }
+    }
+    n_ages <- length(ages)
+    X0 <- cbind(ages, rep(0, n_ages), rep(0, n_ages))
+    X1 <- cbind(ages, rep(1, n_ages), ages)
+
+    t1 <- min(t_boundary)
+    tn <- max(t_boundary)
+    knots <- seq(t1, tn, length.out = h + 2)[2:(h + 1)]
+
+    phi_mean <- identityTT(Boundary.knots = t_boundary, knots = knots,
+                           degree = degree, intercept = intercept)
+    jupp_mean <- jupp(phi_mean)[-c(1, df)]
+    jupp_mean_mat <- matrix(rep(jupp_mean, n_ages), nrow = n_ages, byrow = T)
+
+    reg_mean0 <- apply(cbind(cbind(rep(0, n_ages), X0 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
+    reg_mean1 <- apply(cbind(cbind(rep(0, n_ages), X1 %*% B  + jupp_mean_mat), rep(1, n_ages)), 1, juppinv)
+
+    eval_t <- seq(t1, tn, length.out = eval_points)
+    basis <- splines::bs(x = eval_t, knots = knots, degree = degree, intercept = intercept)
+
+    means0 <- basis %*% reg_mean0
+    means1 <- basis %*% reg_mean1
+
+    return(list(B = B,
+                means0 = means0,
+                means1 = means1))
+  }
+}
+
 #' Plot of posterior fit
 #'
 #' @description
@@ -40,13 +189,13 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
     if (nrow(t) == 1 | ncol(t) == 1) {
       t <- as.numeric(t)
       if (length(t) != n) {
-        stop("The dimesions of 't' and 'y' don't match.")
+        stop("The dimensions of 't' and 'y' don't match.")
       }
       x <- rep(t, times = N)
       x_ind <- rep(t, times = num_indices)
     } else {
       if (nrow(t) != N | ncol(t) != n) {
-        stop("The dimesions of 't' and 'y' don't match.")
+        stop("The dimensions of 't' and 'y' don't match.")
       }
       x <- c(t(t))
       x_ind <- matrix(t[indices, ], nrow = n * num_indices, byrow = TRUE)
@@ -54,7 +203,7 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
     }
   } else {
     if (length(t) != n) {
-      stop("The dimesions of 't' and 'y' don't match.")
+      stop("The dimensions of 't' and 'y' don't match.")
     }
     x <- rep(t, times = N)
     x_ind <- rep(t, times = num_indices)
@@ -73,27 +222,27 @@ plot_fit <- function(t, y, fit, indices = sample(1:nrow(y), 5),
                          group = factor(rep(indices, each = n)))
 
   p <- ggplot2::ggplot() +
-       ggplot2::geom_point(data = background_df, ggplot2::aes(x = .data$x, y = .data$y),
-                           shape = 4, size = 2, color = "grey80") +
-       ggplot2::geom_point(data = index_df, ggplot2::aes(x = .data$x, y = .data$y, color = .data$group),
-                           shape = 1, size = 2) +
-       ggplot2::geom_line(data = lines_df,
-                          ggplot2::aes(x = .data$x, y = .data$y, group = .data$group, color =.data$group),
-                          size = 0.7) +
-       ggplot2::scale_color_manual(values = line_colors) +
-       ggplot2::labs(x = xlab, y = ylab, title = title ) +
-       ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5), legend.position = "none",
-                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                      axis.line.x = ggplot2::element_line(color = "black"),
-                      axis.line.y = ggplot2::element_line(color = "black"),
-                      panel.grid.major = ggplot2::element_blank(),
-                      panel.grid.minor = ggplot2::element_blank(),
-                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                      panel.background = ggplot2::element_blank(),
-                      plot.margin = ggplot2::margin(10, 10, 10, 10)) +
-       ggplot2::scale_x_continuous(expand = c(0.01, 0), limits = c(t1, tn))
+    ggplot2::geom_point(data = background_df, ggplot2::aes(x = .data$x, y = .data$y),
+                        shape = 4, size = 2, color = "grey80") +
+    ggplot2::geom_point(data = index_df, ggplot2::aes(x = .data$x, y = .data$y, color = .data$group),
+                        shape = 1, size = 2) +
+    ggplot2::geom_line(data = lines_df,
+                       ggplot2::aes(x = .data$x, y = .data$y, group = .data$group, color =.data$group),
+                       size = 0.7) +
+    ggplot2::scale_color_manual(values = line_colors) +
+    ggplot2::labs(x = xlab, y = ylab, title = title ) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5), legend.position = "none",
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank(),
+                   plot.margin = ggplot2::margin(10, 10, 10, 10)) +
+    ggplot2::scale_x_continuous(expand = c(0.01, 0), limits = c(t1, tn))
 
   return(p)
 }
@@ -142,20 +291,20 @@ plot_feature <- function(eval_t, shape, quantile_low, quantile_high, color = "bl
                         f_high = quantile_high)
 
   p <- ggplot2::ggplot(data = plot_df, ggplot2::aes(x = .data$x, y = .data$f)) +
-       ggplot2::geom_line(color = color) +
-       ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low, ymax = .data$f_high), fill = color, alpha = alpha) +
-       ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                      axis.line.x = ggplot2::element_line(color = "black"),
-                      axis.line.y = ggplot2::element_line(color = "black"),
-                      panel.grid.major = ggplot2::element_blank(),
-                      panel.grid.minor = ggplot2::element_blank(),
-                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                      panel.background = ggplot2::element_blank()) +
-       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+    ggplot2::geom_line(color = color) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low, ymax = .data$f_high), fill = color, alpha = alpha) +
+    ggplot2::labs(x = xlab, y = ylab, title = title) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank()) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
 
   if (!is.null(background_ind)) {
     for (i in 1:length(background_ind)){
@@ -177,6 +326,10 @@ plot_feature <- function(eval_t, shape, quantile_low, quantile_high, color = "bl
 #' `plot_tt()` plots time-transformation functions. Options allow to plot all together or split into two groups, as
 #' well as color based on covariate value.
 #'
+#' @details
+#' When `group` is provided, functions are split by group membership (e.g., TD vs ASD
+#' in the EEG case study). When `covariate` is also provided, lines are colored by the
+#' covariate value within each group.
 #'
 #' @param eval_t Time points for the horizontal axis.
 #' @param tt_functions Matrix of time transformation functions, where each row corresponds to one function.
@@ -218,25 +371,25 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
     long_df <- tidyr::pivot_longer(plot_df, cols = -.data$x, names_to = "Row_Index", values_to = "Values")
 
     p <- ggplot2::ggplot(data = long_df, ggplot2::aes(x = .data$x,
-                                                        y = .data$Values,
-                                                        group = .data$Row_Index,
-                                                        color = factor(.data$Row_Index))) +
-         ggplot2::geom_line(linewidth = 0.4) +
-         ggplot2::labs(x = xlab, y = ylab, title = title) +
-         ggplot2::scale_color_viridis_d(option = viridis_option, direction = 1) +
-         ggplot2::theme_classic() +
-         ggplot2::theme(legend.position = "none",
-                        axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                        axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                        axis.line.x = ggplot2::element_line(color = "black"),
-                        axis.line.y = ggplot2::element_line(color = "black"),
-                        panel.grid.major = ggplot2::element_blank(),
-                        panel.grid.minor = ggplot2::element_blank(),
-                        panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                        panel.background = ggplot2::element_blank(),
-                        plot.margin = ggplot2::margin(10, 10, 10, 10)) +
-         ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
-         ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(t1, tn))
+                                                      y = .data$Values,
+                                                      group = .data$Row_Index,
+                                                      color = factor(.data$Row_Index))) +
+      ggplot2::geom_line(linewidth = 0.4) +
+      ggplot2::labs(x = xlab, y = ylab, title = title) +
+      ggplot2::scale_color_viridis_d(option = viridis_option, direction = 1) +
+      ggplot2::theme_classic() +
+      ggplot2::theme(legend.position = "none",
+                     axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                     axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                     axis.line.x = ggplot2::element_line(color = "black"),
+                     axis.line.y = ggplot2::element_line(color = "black"),
+                     panel.grid.major = ggplot2::element_blank(),
+                     panel.grid.minor = ggplot2::element_blank(),
+                     panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                     panel.background = ggplot2::element_blank(),
+                     plot.margin = ggplot2::margin(10, 10, 10, 10)) +
+      ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
+      ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(t1, tn))
   } else {
     if (is.null(covariate)) {
       plot_df <- data.frame(x = rep(eval_t, N),
@@ -248,23 +401,23 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                                                         y = .data$y,
                                                         group = .data$group,
                                                         color = factor(.data$vec))) +
-           ggplot2::geom_line() +
-           ggplot2::labs(x = xlab, y = ylab, title = title, color = "Group") +
-           ggplot2::scale_color_manual(labels = stats::setNames(group_labels, as.character(unique(plot_df$vec))),
-                                       values = stats::setNames(group_colors, as.character(unique(plot_df$vec)))) +
-           ggplot2::theme_classic() +
-           ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                          axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                          axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                          axis.line.x = ggplot2::element_line(color = "black"),
-                          axis.line.y = ggplot2::element_line(color = "black"),
-                          panel.grid.major = ggplot2::element_blank(),
-                          panel.grid.minor = ggplot2::element_blank(),
-                          panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                          panel.background = ggplot2::element_blank(),
-                          plot.margin = ggplot2::margin(10, 10, 10, 10)) +
-           ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
-           ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(t1, tn))
+        ggplot2::geom_line() +
+        ggplot2::labs(x = xlab, y = ylab, title = title, color = "Group") +
+        ggplot2::scale_color_manual(labels = stats::setNames(group_labels, as.character(unique(plot_df$vec))),
+                                    values = stats::setNames(group_colors, as.character(unique(plot_df$vec)))) +
+        ggplot2::theme_classic() +
+        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                       axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                       axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                       axis.line.x = ggplot2::element_line(color = "black"),
+                       axis.line.y = ggplot2::element_line(color = "black"),
+                       panel.grid.major = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                       panel.background = ggplot2::element_blank(),
+                       plot.margin = ggplot2::margin(10, 10, 10, 10)) +
+        ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
+        ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(t1, tn))
     } else {
       plot_df <- data.frame(x = rep(eval_t, N),
                             y = c(t(tt_functions)),
@@ -279,24 +432,24 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
                                                       y = .data$y,
                                                       group = .data$group,
                                                       color = .data$cov)) +
-            ggplot2::geom_line() +
-            ggplot2::labs(x = xlab, y = ylab, color = covlab) +
-            ggplot2::scale_color_viridis_c(option = viridis_option, direction = -1) +
-            #ggplot2::scale_color_gradient(low = covariate_gradient[1], high = covariate_gradient[2]) +
-            ggplot2::theme_classic() +
-            ggplot2::ggtitle(group_labels[1]) +
-            ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                           axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                           axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                           axis.line.x = ggplot2::element_line(color = "black"),
-                           axis.line.y = ggplot2::element_line(color = "black"),
-                           panel.grid.major = ggplot2::element_blank(),
-                           panel.grid.minor = ggplot2::element_blank(),
-                           panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                           panel.background = ggplot2::element_blank(),
-                           plot.margin = ggplot2::margin(10, 10, 10, 10)) +
-            ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
-            ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(min(tt_functions), max(tt_functions)))
+        ggplot2::geom_line() +
+        ggplot2::labs(x = xlab, y = ylab, color = covlab) +
+        ggplot2::scale_color_viridis_c(option = viridis_option, direction = -1) +
+        #ggplot2::scale_color_gradient(low = covariate_gradient[1], high = covariate_gradient[2]) +
+        ggplot2::theme_classic() +
+        ggplot2::ggtitle(group_labels[1]) +
+        ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                       axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                       axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                       axis.line.x = ggplot2::element_line(color = "black"),
+                       axis.line.y = ggplot2::element_line(color = "black"),
+                       panel.grid.major = ggplot2::element_blank(),
+                       panel.grid.minor = ggplot2::element_blank(),
+                       panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                       panel.background = ggplot2::element_blank(),
+                       plot.margin = ggplot2::margin(10, 10, 10, 10)) +
+        ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn)) +
+        ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(min(tt_functions), max(tt_functions)))
 
       p1 <- ggplot2::ggplot(data = df_1, ggplot2::aes(x = .data$x,
                                                       y = .data$y,
@@ -323,7 +476,7 @@ plot_tt <- function(eval_t, tt_functions, group = NULL, covariate = NULL,
 
       p <- gridExtra::grid.arrange(p0, p1, ncol = 2,
                                    top = grid::textGrob(title,
-                                                             gp = grid::gpar(fontsize =15, font = 2)))
+                                                        gp = grid::gpar(fontsize =15, font = 2)))
     }
   }
   return(p)
@@ -431,7 +584,7 @@ plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title =
     set.seed(15)
     random_linetypes <- sample(available_linetypes, length(unique_rows), replace = TRUE)
     p <- p + ggplot2::scale_color_manual(values = rep(color, length(unique(data$Row_Index)))) +
-         ggplot2::scale_linetype_manual(values = random_linetypes)
+      ggplot2::scale_linetype_manual(values = random_linetypes)
   }
 
   return(p)
@@ -443,6 +596,9 @@ plot_data <- function(t, y, indices = 1:nrow(y), xlab = "x", ylab = "y", title =
 #' `plot_data_cd()` plots the rows of the matrix of observations, in separate panels by clinical designation.
 #' The lines are colored by age value for each individual.
 #'
+#' @details
+#' This function is intended for the EEG case study, where `group` corresponds
+#' to clinical designation (TD vs ASD).
 #'
 #' @param t  Time points for the x axis. Either a vector that is common for all observations, or a matrix for which
 #' each row corresponds to an observation.
@@ -484,29 +640,29 @@ plot_data_cd <- function(t, y, group, covariate,
         stop("The dimensions of 't' and 'y' don't match.")
       }
       plot_df <- data.frame(x = rep(t, N),
-                         y = c(t(y)),
-                         group = rep(1:N, each = n),
-                         vec = rep(group, each = n),
-                         cov = rep(covariate, each = n))
+                            y = c(t(y)),
+                            group = rep(1:N, each = n),
+                            vec = rep(group, each = n),
+                            cov = rep(covariate, each = n))
     } else {
       if (nrow(t) != N | ncol(t) != n) {
         stop("The dimensions of 't' and 'y' don't match.")
       }
       plot_df <- data.frame(x = c(t(t)),
-                         y = c(t(y)),
-                         group = rep(1:N, each = n),
-                         vec = rep(group, each = n),
-                         cov = rep(covariate, each = n))
+                            y = c(t(y)),
+                            group = rep(1:N, each = n),
+                            vec = rep(group, each = n),
+                            cov = rep(covariate, each = n))
     }
-   } else {
+  } else {
     if (length(t) != n) {
       stop("The dimensions of 't' and 'y' don't match.")
     }
     plot_df <- data.frame(x = rep(t, N),
-                       y = c(t(y)),
-                       group = rep(1:N, each = n),
-                       vec = rep(group, each = n),
-                       cov = rep(covariate, each = n))
+                          y = c(t(y)),
+                          group = rep(1:N, each = n),
+                          vec = rep(group, each = n),
+                          cov = rep(covariate, each = n))
   }
 
   df_0 <- plot_df[plot_df$vec == 0, ]
@@ -590,30 +746,30 @@ plot_posterior_hist <- function(sample, colors = c("gold", "darkblue"), xlab = "
   data <- data.frame("sample" = sample)
 
   temp_hist <- ggplot2::ggplot(data, ggplot2::aes(x = .data$sample)) +
-               ggplot2::geom_histogram(binwidth = binwidth,
-                                       ggplot2::aes(y = ggplot2::after_stat(.data$density)))
+    ggplot2::geom_histogram(binwidth = binwidth,
+                            ggplot2::aes(y = ggplot2::after_stat(.data$density)))
 
   hist_data <- ggplot2::ggplot_build(temp_hist)$data[[1]]
   max_density <- max(hist_data$density)
 
   p <- ggplot2::ggplot(data, ggplot2::aes(x = .data$sample)) +
-       ggplot2::geom_histogram(binwidth = binwidth,
-                               ggplot2::aes(y = ggplot2::after_stat(.data$density)),
-                               color = "black",
-                               fill = colors[1]) +
-       ggplot2::geom_density(lwd = 2, color = colors[2]) +
-       ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                      legend.position = "none",
-                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                      axis.line.x = ggplot2::element_line(color = "black"),
-                      axis.line.y = ggplot2::element_line(color = "black"),
-                      panel.grid.major = ggplot2::element_blank(),
-                      panel.grid.minor = ggplot2::element_blank(),
-                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                      panel.background = ggplot2::element_blank()) +
+    ggplot2::geom_histogram(binwidth = binwidth,
+                            ggplot2::aes(y = ggplot2::after_stat(.data$density)),
+                            color = "black",
+                            fill = colors[1]) +
+    ggplot2::geom_density(lwd = 2, color = colors[2]) +
+    ggplot2::labs(x = xlab, y = ylab, title = title) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                   legend.position = "none",
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank()) +
     ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(min(data), max(data))) +
     ggplot2::scale_y_continuous(expand = c(0, 0), limits = c(0, max_density + 0.3))
 
@@ -642,36 +798,36 @@ plot_posterior_hist <- function(sample, colors = c("gold", "darkblue"), xlab = "
 #'
 #' @importFrom rlang .data
 plot_member_boxplot <- function(pi, group, colors = c("cornflowerblue", "gold1"),
-                            group_labels = c("0", "1"), xlab = "Designation",
-                            ylab = "Value", title = "") {
+                                group_labels = c("0", "1"), xlab = "Designation",
+                                ylab = "Value", title = "") {
   data_pi <- data.frame("pi" = pi,
                         "group" = group)
   data_0 <- data_pi[data_pi$group == 0, ]
   data_1 <- data_pi[data_pi$group == 1, ]
 
   p <- ggplot2::ggplot() +
-       ggplot2::geom_boxplot(data = data_0,
-                       mapping = ggplot2::aes(x = group_labels[1], y = .data$pi),
-                       fill = ggplot2::alpha(colors[1], 1)) +
-       ggplot2::geom_boxplot(data = data_1,
-                        mapping = ggplot2::aes(x = group_labels[2], y = .data$pi),
-                        fill = ggplot2::alpha(colors[2], 1)) +
-       ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
-                      legend.position = "none",
-                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                      axis.line.x = ggplot2::element_line(color = "black"),
-                      axis.line.y = ggplot2::element_line(color = "black"),
-                      panel.grid.major = ggplot2::element_blank(),
-                      panel.grid.minor = ggplot2::element_blank(),
-                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                      panel.background = ggplot2::element_blank()) +
-       ggplot2::geom_jitter(data = data_0, ggplot2::aes(x = group_labels[1], y = .data$pi),
-                            color = "black", width = 0.1) +
-       ggplot2::geom_jitter(data = data_1, ggplot2::aes(x = group_labels[2], y = .data$pi),
-                            color = "black", width = 0.1)
+    ggplot2::geom_boxplot(data = data_0,
+                          mapping = ggplot2::aes(x = group_labels[1], y = .data$pi),
+                          fill = ggplot2::alpha(colors[1], 1)) +
+    ggplot2::geom_boxplot(data = data_1,
+                          mapping = ggplot2::aes(x = group_labels[2], y = .data$pi),
+                          fill = ggplot2::alpha(colors[2], 1)) +
+    ggplot2::labs(x = xlab, y = ylab, title = title) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5),
+                   legend.position = "none",
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank()) +
+    ggplot2::geom_jitter(data = data_0, ggplot2::aes(x = group_labels[1], y = .data$pi),
+                         color = "black", width = 0.1) +
+    ggplot2::geom_jitter(data = data_1, ggplot2::aes(x = group_labels[2], y = .data$pi),
+                         color = "black", width = 0.1)
 
   return(p)
 
@@ -735,29 +891,29 @@ plot_multiple_feature <- function(eval_t, shape, quantile_low, quantile_high, co
   color_mapping <- stats::setNames(colors, list_names)
 
   p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = .data$x, y = .data$f)) +
-       ggplot2::geom_line(ggplot2::aes(color = .data$warping)) +
-       ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low,
-                                         ymax = .data$f_high,
-                                         fill = .data$warping),
-                            alpha = alpha) +
-       ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::scale_color_manual(values = color_mapping) +
-       ggplot2::scale_fill_manual(values = color_mapping) +
-       ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
-                      legend.position = legend_position,
-                      legend.title = ggplot2::element_blank(),
-                      legend.spacing.x = grid::unit(0, "cm"),
-                      axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
-                      axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
-                      axis.line.x = ggplot2::element_line(color = "black"),
-                      axis.line.y = ggplot2::element_line(color = "black"),
-                      axis.ticks.y = ggplot2::element_line(color = "black"),
-                      panel.grid.major = ggplot2::element_blank(),
-                      panel.grid.minor = ggplot2::element_blank(),
-                      panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
-                      panel.background = ggplot2::element_blank()) +
-       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+    ggplot2::geom_line(ggplot2::aes(color = .data$warping)) +
+    ggplot2::geom_ribbon(ggplot2::aes(ymin = .data$f_low,
+                                      ymax = .data$f_high,
+                                      fill = .data$warping),
+                         alpha = alpha) +
+    ggplot2::labs(x = xlab, y = ylab, title = title) +
+    ggplot2::scale_color_manual(values = color_mapping) +
+    ggplot2::scale_fill_manual(values = color_mapping) +
+    ggplot2::theme_classic() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
+                   legend.position = legend_position,
+                   legend.title = ggplot2::element_blank(),
+                   legend.spacing.x = grid::unit(0, "cm"),
+                   axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
+                   axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
+                   axis.line.x = ggplot2::element_line(color = "black"),
+                   axis.line.y = ggplot2::element_line(color = "black"),
+                   axis.ticks.y = ggplot2::element_line(color = "black"),
+                   panel.grid.major = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
+                   panel.background = ggplot2::element_blank()) +
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
 
   if (!is.null(background_ind)) {
     for (i in 1:length(background_ind)){
@@ -822,8 +978,8 @@ plot_identifiability <- function(eval_t, shape,
   }
 
   p <- p + ggplot2::labs(x = xlab, y = ylab, title = title) +
-       ggplot2::theme_classic() +
-       ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
+    ggplot2::theme_classic() +
+    ggplot2::theme(plot.title = ggplot2::element_text(hjust =0.5),
                    axis.title.x = ggplot2::element_text(margin = ggplot2::margin(t = 10)),
                    axis.text.x = ggplot2::element_text(margin = ggplot2::margin(t = 0)),
                    axis.line.x = ggplot2::element_line(color = "black"),
@@ -833,9 +989,10 @@ plot_identifiability <- function(eval_t, shape,
                    panel.grid.minor = ggplot2::element_blank(),
                    panel.border = ggplot2::element_rect(color = "black", fill = NA, linewidth = 1),
                    panel.background = ggplot2::element_blank()) +
-       ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
+    ggplot2::scale_x_continuous(expand = c(0, 0), limits = c(t1, tn))
 
   return(p)
 
 }
+
 
