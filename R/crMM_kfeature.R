@@ -234,7 +234,8 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
   for (i in 1:total_it) {
     if (i %% 100 == 0) print(i)
 
-    if (i %% 2000 == 0 & !is.null(process_id)) {
+    #if (i %% 2000 == 0 & !is.null(process_id)) {
+    if (i %% 100 == 0 & !is.null(process_id)) {
       system(sprintf('echo "\n%s - Process %s - Completed %d iterations\n"', Sys.time(), process_id, i))
     }
 
