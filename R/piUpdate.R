@@ -285,8 +285,7 @@ piUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, gamma1, gamma2, pi, knots_
 }
 
 kfeature_piUpdate_Warp <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, knots_shape, degree = 3,
-                          intercept = F, var_e, alpha, tuning_param = 1000, reg = 1, repulsive = T,
-                          temperature = 1) {
+                          intercept = F, var_e, alpha, tuning_param = 1000, reg = 1, repulsive = T) {
   n <- length(t)
   N <- length(c)
   K <- ncol(pi)
@@ -318,7 +317,7 @@ kfeature_piUpdate_Warp <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, kn
     y_i <- y[i, ]
 
     P1 <- -1 / (2 * var_e) * sum((y_i - modelMean_new) ^ 2)
-    P1 <- P1 / temperature
+    P1 <- P1
 
     for (k in 1:K) {
       P1 <- P1 + (alpha[k] - 1) * log(pi_new[k])
@@ -327,7 +326,7 @@ kfeature_piUpdate_Warp <- function(t, y, c, a, phi, rho, tt_basis, gamma, pi, kn
     Q1 <- LaplacesDemon::ddirichlet(pi_new, alpha = tuning_param * pi_old, log = T)
 
     P0 <- -1 / (2 * var_e) * sum((y_i - modelMean_old) ^ 2)
-    P0 <- P0 / temperature
+    P0 <- P0
 
     for (k in 1:K) {
       P0 <- P0 + (alpha[k] - 1) * log(pi_old[k])

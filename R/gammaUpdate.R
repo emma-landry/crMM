@@ -183,7 +183,7 @@ gammaUpdate_Warp_alt <- function(t, y, c, phi, tt_basis, pi, knots_shape, Omega,
 }
 
 kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, knots_shape, Omega,
-                             lambda, var_e, degree = 3, intercept = F, temperature = 1) {
+                             lambda, var_e, degree = 3, intercept = F) {
   n <- length(t)
   N <- length(c)
   p <- length(knots_shape)
@@ -271,8 +271,8 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, kno
       priorPrecision[((k - 1) * df + 1):(k * df), ((k - 1) * df + 1):(k * df)] <- Omega / lambda[k]
     }
 
-    cov_gamma <- MASS::ginv(priorPrecision + (temperature * preCov) / var_e)
-    mean_gamma <- cov_gamma %*% (temperature * preMean) / var_e
+    cov_gamma <- MASS::ginv(priorPrecision + preCov / var_e)
+    mean_gamma <- cov_gamma %*% preMean / var_e
 
     gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
     gamma <- matrix(gamma, nrow = df, ncol = K)
@@ -300,8 +300,8 @@ kfeature_gammaUpdate_Warp <- function(t, y, c, a, K, phi, rho, tt_basis, pi, kno
     }
     priorPrecision <- Omega / lambda
 
-    cov_gamma <- MASS::ginv(priorPrecision + (temperature * preCov) / var_e)
-    mean_gamma <- cov_gamma %*% (temperature * preMean) / var_e
+    cov_gamma <- MASS::ginv(priorPrecision + preCov / var_e)
+    mean_gamma <- cov_gamma %*% preMean / var_e
 
     gamma <- mvtnorm::rmvnorm(n = 1, mean = mean_gamma, sigma = cov_gamma)
   }

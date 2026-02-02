@@ -238,17 +238,10 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
       system(sprintf('echo "\n%s - Process %s - Completed %d iterations\n"', Sys.time(), process_id, i))
     }
 
-    if (i <= burn_it) {
-      temperature_gamma <- max(1, 1 + 5 * (1 - i / burn_it) ^ 0.5)
-    } else {
-      temperature_gamma <- 1
-    }
-
     gamma <- kfeature_gammaUpdate_Warp(
       t = t, y = y, c = c, a = a, K = K, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
       knots_shape = knots_shape, Omega = Omega, lambda = lambda,
-      var_e = var_e, degree = degree_shape, intercept = intercept_shape, temperature = temperature_gamma
-    )
+      var_e = var_e, degree = degree_shape, intercept = intercept_shape)
 
     lambda <- kfeature_lambdaUpdate(gamma = gamma, a_l = a_l, b_l = b_l, Omega = Omega)
 
@@ -264,17 +257,11 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                   intercept = intercept_shape, var_e = var_e, common_a = common_a)
 
     if (K > 1) {
-      if (i <= burn_it) {
-        temperature_pi <- max(1, 1 + 5 * (1 - i / burn_it) ^ 0.5)
-      } else {
-        temperature_pi <- 1
-      }
 
       pi <- kfeature_piUpdate_Warp(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
                                    gamma = gamma, pi = pi, knots_shape = knots_shape,
                                    degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                                   alpha = alpha, tuning_param = tuning_pi, repulsive = repulsive_pi, reg = reg,
-                                   temperature = temperature_pi)
+                                   alpha = alpha, tuning_param = tuning_pi, repulsive = repulsive_pi, reg = reg)
     }
 
 
@@ -283,15 +270,9 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                                       degree = degree_shape, intercept = intercept_shape, a_e = a_e, b_e = b_e)
 
     if (warp_num > 0) {
-      if (i <= burn_it) {
-        temperature_rho <- max(1, 1 + 5 * (1 - i / burn_it) ^ 0.5)
-      } else {
-        temperature_rho <- 1
-      }
-
       rho <- kfeature_rhoUpdate(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
                        gamma = gamma, knots_shape = knots_shape,
-                       degree = degree_shape, intercept = intercept_shape, var_e = var_e, temperature = temperature_rho)
+                       degree = degree_shape, intercept = intercept_shape, var_e = var_e)
 
     }
 
