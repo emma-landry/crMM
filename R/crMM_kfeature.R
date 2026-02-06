@@ -270,22 +270,29 @@ crMM_kfeature <- function(num_it, burnin = 0.2, t, y, p, degree_shape = 3, inter
                                       gamma = gamma, pi = pi, knots_shape = knots_shape,
                                       degree = degree_shape, intercept = intercept_shape, a_e = a_e, b_e = b_e)
 
-    if (warp_num > 0) {
-      rho <- kfeature_rhoUpdate(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
-                       gamma = gamma, knots_shape = knots_shape,
-                       degree = degree_shape, intercept = intercept_shape, var_e = var_e)
 
+
+    warp_active <- (i > round(0.3 * burn_it))
+    if (warp_active) {
+      if (warp_num > 0) {
+        rho <- kfeature_rhoUpdate(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis, pi = pi,
+                                  gamma = gamma, knots_shape = knots_shape,
+                                  degree = degree_shape, intercept = intercept_shape, var_e = var_e)
+
+      }
+
+      phi_out <- kfeature_phiUpdate_NoReg(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
+                                          gamma = gamma, pi = pi, knots_shape = knots_shape,
+                                          degree = degree_shape, intercept = intercept_shape, var_e = var_e,
+                                          var_phi = var_phi, Upsilon = Upsilon, tau = tau, it_num = i,
+                                          acceptance_sums = acceptance_sums)
+
+      phi <- phi_out$phi
+      acceptance_sums <- phi_out$acceptance
+      tau <- phi_out$tau
     }
 
-    phi_out <- kfeature_phiUpdate_NoReg(t = t, y = y, c = c, a = a, phi = phi, rho = rho, tt_basis = tt_basis,
-                                 gamma = gamma, pi = pi, knots_shape = knots_shape,
-                                 degree = degree_shape, intercept = intercept_shape, var_e = var_e,
-                                 var_phi = var_phi, Upsilon = Upsilon, tau = tau, it_num = i,
-                                 acceptance_sums = acceptance_sums)
 
-    phi <- phi_out$phi
-    acceptance_sums <- phi_out$acceptance
-    tau <- phi_out$tau
 
     var_phi <- var_phiUpdate_NoReg(phi = phi, Upsilon = Upsilon, a_phi = a_phi, b_phi = b_phi)
 
